@@ -1,13 +1,25 @@
 {
-  "name": "universal-web-dashboard",
+  "name": "beacon-field-monitor",
   "version": "1.1.0",
-  "description": "Universal Web Dashboard - Device monitoring and management",
+  "description": "BEACON — Field Network Monitor. Black/Porcelain/Baltic Blue (000004/FBFEF9/0C6291/A63446/7E1946) dashboard for ping/HTTP/TCP + SNMP.",
   "main": "app.js",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
+    "setup": "node setup.js",
+    "setup:check": "node setup.js --check",
+    "setup:force": "node setup.js --force",
     "start": "node app.js",
     "dev": "node app.js",
     "test": "jest --forceExit --detectOpenHandles",
-    "generate-cert": "openssl req -x509 -newkey rsa:2048 -keyout certs/key.pem -out certs/cert.pem -days 365 -nodes"
+    "test:verify": "npm run setup:check && jest --forceExit --detectOpenHandles",
+    "health": "node -e \"fetch('http://localhost:3000/health').then(r=>r.json()).then(j=>console.log(j)).catch(e=>{console.error('health check failed:',e.message);process.exit(1)})\"",
+    "generate-cert": "openssl req -x509 -newkey rsa:2048 -keyout certs/key.pem -out certs/cert.pem -days 365 -nodes",
+    "seed": "node setup.js --seed",
+    "predeploy": "node patch-demo.js",
+    "deploy": "gh-pages -d demo -t true"
   },
   "keywords": [
     "dashboard",
@@ -19,6 +31,13 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "jest": {
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^otplib$": "<rootDir>/tests/__mocks__/otplib.js",
+      "^qrcode$": "<rootDir>/tests/__mocks__/qrcode.js"
+    }
+  },
   "dependencies": {
     "adm-zip": "^0.6.0",
     "bcryptjs": "^2.4.3",
@@ -34,6 +53,7 @@
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
+    "gh-pages": "^6.3.0",
     "jest": "^29.7.0",
     "supertest": "^6.3.4"
   },

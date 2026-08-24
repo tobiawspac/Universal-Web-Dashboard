@@ -1,0 +1,12 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+certs/*.pem
+certs/*.key
+devices.db
+devices.json
+data
+*.log
+.wrangler
+.env

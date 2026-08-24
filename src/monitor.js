@@ -9,8 +9,31 @@ try { snmpModule = require('./discovery/snmp'); } catch {}
 let pluginLoader = null;
 try { pluginLoader = require('./plugins/loader'); } catch {}
 
+async function loadDevicesUnified() {
+  try {
+    const rows = await dbAll('SELECT * FROM devices ORDER BY id');
+    if (rows.length) {
+      return rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        ip: r.ip,
+        type: r.type,
+        checkType: r.check_type || 'ping',
+        plugin_id: r.plugin_id,
+        snmp_enabled: !!r.snmp_enabled,
+        snmp_community: r.snmp_community,
+        port: r.port,
+        httpPath: r.http_path,
+        https: !!r.https,
+        notes: r.notes,
+      }));
+    }
+  } catch {}
+  return loadDevices();
+}
+
 async function monitorAllDevices() {
-  const devices = loadDevices();
+  const devices = await loadDevicesUnified();
   for (const device of devices) {
     const host = device.ip || device.host;
     if (!host) continue;

@@ -4,41 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
-    <title>Universal Web Dashboard — Login</title>
+    <title>BEACON — Login</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="scene">
-  <svg viewBox="0 0 1200 800" preserveAspectRatio="none">
-    <polygon points="0,800 0,500 300,220 600,480 850,270 1100,460 1200,380 1200,800" fill="#5b53a8" opacity="0.55"/>
-    <polygon points="0,800 0,600 350,380 650,600 950,420 1200,600 1200,800" fill="#453f8f" opacity="0.75"/>
-    <polygon points="0,800 0,720 400,600 750,730 1100,600 1200,700 1200,800" fill="#2f2a6b"/>
-  </svg>
-  <div class="login-title">Universal Web Dashboard</div>
-  <div class="login-card">
+  <div class="login-shell">
+    <div class="login-brand">
+      <div class="login-mark">◉</div>
+      <div class="login-title">BEA<span>CON</span></div>
+      <div class="login-subtitle">Field Network Monitor · Secure Access</div>
+    </div>
 
-    <!-- Password login -->
-    <form id="loginForm">
-      <input class="field" id="loginPassword" placeholder="Heslo" type="password" required autofocus>
-      <button type="submit" class="btn">LOGIN</button>
-      <p id="loginStatus" class="status-message" style="margin-top:12px;text-align:center;"></p>
-    </form>
+    <div class="login-card">
+      <!-- Password login -->
+      <form id="loginForm">
+        <label class="field-label" for="loginPassword">Password</label>
+        <input class="field" id="loginPassword" placeholder="••••••••" type="password" required autofocus>
+        <button type="submit" class="btn">Enter Beacon</button>
+        <p id="loginStatus" class="status-message" style="text-align:center"></p>
+      </form>
 
-    <!-- 2FA (hidden) -->
-    <form id="tfaForm" style="display:none;">
-      <p style="color:#9d96b8;font-size:13px;margin-bottom:12px;text-align:center;">Zadejte kód z autentikátoru:</p>
-      <input class="field" id="tfaCode" placeholder="000000" type="text" maxlength="6" required autocomplete="one-time-code">
-      <button type="submit" class="btn">OVĚŘIT</button>
-      <p id="tfaStatus" class="status-message" style="margin-top:12px;text-align:center;"></p>
-    </form>
+      <!-- 2FA (hidden) -->
+      <form id="tfaForm" style="display:none">
+        <p class="muted mono" style="font-size:11px;text-align:center;margin-bottom:12px">Zadejte kód z autentikátoru</p>
+        <label class="field-label" for="tfaCode">2FA Code</label>
+        <input class="field" id="tfaCode" placeholder="000000" type="text" maxlength="6" required autocomplete="one-time-code" inputmode="numeric">
+        <button type="submit" class="btn">Ověřit</button>
+        <p id="tfaStatus" class="status-message" style="text-align:center"></p>
+      </form>
 
+      <div class="login-meta">000004 · FBFEF9 · 0C6291 · A63446 · 7E1946 · v1.1</div>
+    </div>
+
+    <div class="login-help">
+      <span class="mono" style="font-size:10px;opacity:.6">Demo password: admin123 · </span>
+      <a href="index.html" class="mono" style="font-size:10px">Continue as demo</a>
+    </div>
   </div>
 </div>
 
 <script>
-    location.href = 'index.html';
-
     // Password login
     document.getElementById('loginForm').addEventListener('submit', async function (e) {
         e.preventDefault();
@@ -47,6 +54,7 @@
         const btn = e.target.querySelector('button[type="submit"]');
         statusEl.textContent = '';
         btn.disabled = true;
+        btn.textContent = 'Checking…';
 
         try {
             const response = await fetch('/api/login', {
@@ -65,12 +73,13 @@
                 return;
             }
             statusEl.textContent = 'Nesprávné heslo.';
-            statusEl.style.color = '#e79aa3';
+            statusEl.style.color = 'var(--danger)';
         } catch {
-            statusEl.textContent = 'Server neběží. Spusť: node src/server.js';
-            statusEl.style.color = '#e79aa3';
+            statusEl.textContent = 'Server neběží. Spusť: node app.js';
+            statusEl.style.color = 'var(--danger)';
         } finally {
             btn.disabled = false;
+            btn.textContent = 'Enter Beacon';
         }
     });
 
@@ -93,16 +102,14 @@
             const data = await response.json();
             if (response.ok && data.ok) { location.href = 'index.html'; return; }
             statusEl.textContent = data.error || 'Nesprávný kód.';
-            statusEl.style.color = '#e79aa3';
+            statusEl.style.color = 'var(--danger)';
         } catch {
             statusEl.textContent = 'Chyba spojení.';
-            statusEl.style.color = '#e79aa3';
+            statusEl.style.color = 'var(--danger)';
         } finally {
             btn.disabled = false;
         }
     });
-
-
 </script>
 </body>
 </html>

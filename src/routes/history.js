@@ -54,9 +54,30 @@ router.get('/summary/:host', requireAuth, async (req, res) => {
 });
 
 router.get('/api/dashboard-summary', requireAuth, async (req, res) => {
+  const { dbAll } = require('../db');
   const { loadDevices } = require('../utils/devices');
   const { checkDevice } = require('../utils/checks');
-  const devices = loadDevices();
+  let devices = [];
+  try {
+    const rows = await dbAll('SELECT * FROM devices ORDER BY id');
+    if (rows.length) {
+      devices = rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        ip: r.ip,
+        type: r.type,
+        checkType: r.check_type || 'ping',
+        port: r.port,
+        httpPath: r.http_path,
+        https: !!r.https,
+        notes: r.notes,
+      }));
+    } else {
+      devices = loadDevices();
+    }
+  } catch {
+    devices = loadDevices();
+  }
   const results = await Promise.all(
     devices.map(async (device) => {
       const host = device.ip || device.host;

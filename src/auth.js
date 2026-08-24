@@ -59,6 +59,13 @@ async function initAuth() {
 // Called explicitly from server.js after migrations, NOT auto-invoked on require.
 
 function getHashedPassword() {
+  if (!hashedPassword) {
+    if (config.password && typeof config.password === 'string' && config.password.startsWith('$2')) {
+      hashedPassword = config.password;
+    } else {
+      hashedPassword = hashPassword(config.password || 'admin123');
+    }
+  }
   return hashedPassword;
 }
 
@@ -115,12 +122,13 @@ function getAllSessions() {
   return active;
 }
 
-setInterval(() => {
+const _gc = setInterval(() => {
   const now = Date.now();
   for (const [token, expiry] of sessions) {
     if (expiry < now) sessions.delete(token);
   }
 }, 10 * 60 * 1000);
+if (_gc.unref) _gc.unref();
 
 function checkRateLimit(ip) {
   const now = Date.now();
