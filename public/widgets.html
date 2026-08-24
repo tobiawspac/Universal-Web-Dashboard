@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>Widgets - Universal Web Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Dashboard Widgets</h1>
+        <nav class="topnav">
+            <a href="index.html">Dashboard</a>
+            <a href="terminal.html">Terminal</a>
+            <a href="alerts.html">Alerts</a>
+            <a href="discovery.html">Discovery</a>
+            <a href="plugins.html">Plugins</a>
+            <a href="widgets.html" class="active">Widgets</a>
+            <button class="button2" id="logoutBtn" style="background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border);">Logout</button>
+        </nav>
+    </header>
+    <main>
+        <!-- Status Summary Widget -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:20px;">
+            <div class="card" style="text-align:center;">
+                <div id="widgetOnline" style="font-size:36px;font-weight:700;color:var(--accent);">—</div>
+                <div style="font-size:12px;color:var(--ink-dim);">Online</div>
+            </div>
+            <div class="card" style="text-align:center;">
+                <div id="widgetOffline" style="font-size:36px;font-weight:700;color:var(--danger);">—</div>
+                <div style="font-size:12px;color:var(--ink-dim);">Offline</div>
+            </div>
+            <div class="card" style="text-align:center;">
+                <div id="widgetTotal" style="font-size:36px;font-weight:700;color:var(--ink);">—</div>
+                <div style="font-size:12px;color:var(--ink-dim);">Total Devices</div>
+            </div>
+            <div class="card" style="text-align:center;">
+                <div id="widgetAvgUptime" style="font-size:36px;font-weight:700;color:var(--accent);">—</div>
+                <div style="font-size:12px;color:var(--ink-dim);">Avg Uptime</div>
+            </div>
+        </div>
+
+        <!-- Plugin Widgets -->
+        <div class="card">
+            <h3 style="color:var(--accent);margin-bottom:14px;">Plugin Widgets</h3>
+            <div id="pluginWidgets" style="color:var(--ink-dim);">Loading...</div>
+        </div>
+
+        <!-- Device Latency Chart -->
+        <div class="card">
+            <h3 style="color:var(--accent);margin-bottom:14px;">Network Latency</h3>
+            <canvas id="latencyChart" width="800" height="200" style="width:100%;"></canvas>
+        </div>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        (async () => {
+            try {
+                const res = await fetch('/api/check-auth', { credentials: 'include' });
+                const data = await res.json();
+                if (!data.authenticated) { location.href = 'login.html'; return; }
+            } catch { location.href = 'login.html'; return; }
+        })();
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            location.href = 'login.html';
+        });
+
+        // Status summary
+        async function updateSummary() {
+            const res = await fetch('/api/dashboard-summary', { credentials: 'include' });
+            const devices = await res.json();
+            const online = devices.filter((d) => d.live && d.live.alive).length;
+            const offline = devices.length - online;
+            const avgUptime = devices.length && devices.some((d) => d.summary && d.summary.totalChecks)
+                ? (devices.reduce((s, d) => s + (d.summary ? d.summary.uptimePercent || 0 : 0), 0) / devices.filter((d) => d.summary && d.summary.totalChecks).length || 0).toFixed(1)
+                : '—';
+
+            document.getElementById('widgetOnline').textContent = online;
+            document.getElementById('widgetOffline').textContent = offline;
+            document.getElementById('widgetTotal').textContent = devices.length;
+            document.getElementById('widgetAvgUptime').textContent = avgUptime !== '—' ? avgUptime + '%' : '—';
+
+            drawLatencyChart(devices);
+        }
+
+        function drawLatencyChart(devices) {
+            const canvas = document.getElementById('latencyChart');
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width, H = canvas.height;
+            const pad = { top: 20, bottom: 30, left: 50, right: 20 };
+
+            ctx.clearRect(0, 0, W, H);
+            if (!devices.length) return;
+
+            const onlineDevices = devices.filter((d) => d.live && d.live.alive && d.live.latencyMs != null);
+            if (!onlineDevices.length) {
+                ctx.fillStyle = '#8ba0ac';
+                ctx.font = '13px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('No latency data available', W / 2, H / 2);
+                return;
+            }
+
+            const barWidth = Math.min(40, (W - pad.left - pad.right) / onlineDevices.length - 4);
+            const maxLatency = Math.max(...onlineDevices.map((d) => d.live.latencyMs), 1);
+
+            // Grid
+            ctx.strokeStyle = '#233240';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i <= 4; i++) {
+                const y = pad.top + (H - pad.top - pad.bottom) * (1 - i / 4);
+                ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+                ctx.fillStyle = '#8ba0ac';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(Math.round(maxLatency * i / 4) + 'ms', pad.left - 5, y + 3);
+            }
+
+            // Bars
+            onlineDevices.forEach((d, i) => {
+                const x = pad.left + i * (barWidth + 4) + 2;
+                const barH = (d.live.latencyMs / maxLatency) * (H - pad.top - pad.bottom);
+                const y = H - pad.bottom - barH;
+
+                ctx.fillStyle = d.live.latencyMs > 100 ? '#e79aa3' : '#45d4c0';
+                ctx.fillRect(x, y, barWidth, barH);
+
+                // Label
+                ctx.save();
+                ctx.translate(x + barWidth / 2, H - pad.bottom + 5);
+                ctx.rotate(-Math.PI / 4);
+                ctx.fillStyle = '#8ba0ac';
+                ctx.font = '9px sans-serif';
+                ctx.textAlign = 'right';
+                const label = d.name || d.ip;
+                ctx.fillText(label.length > 12 ? label.substring(0, 10) + '..' : label, 0, 0);
+                ctx.restore();
+            });
+        }
+
+        // Plugin widgets
+        async function loadPluginWidgets() {
+            const res = await fetch('/api/plugins', { credentials: 'include' });
+            const plugins = await res.json();
+            const widgetPlugins = plugins.filter((p) => p.enabled && p.type.includes('widget'));
+            const div = document.getElementById('pluginWidgets');
+
+            if (!widgetPlugins.length) {
+                div.textContent = 'No widget plugins installed. Install a plugin with type "widget" to see widgets here.';
+                return;
+            }
+
+            div.innerHTML = '';
+            for (const p of widgetPlugins) {
+                const container = document.createElement('div');
+                container.style.border = '1px solid var(--line)';
+                container.style.marginBottom = '12px';
+                container.style.minHeight = '80px';
+                const label = document.createElement('div');
+                label.style.cssText = 'padding:8px;font-size:12px;color:var(--accent);';
+                label.textContent = `${p.name} v${p.version}`;
+                container.appendChild(label);
+                div.appendChild(container);
+
+                WidgetHost.createWidgetFrame(p.id, container, null, {});
+            }
+        }
+
+        // Live updates via socket
+        try {
+            const socket = io();
+            socket.on('device:update', () => { updateSummary(); });
+        } catch {}
+
+        updateSummary();
+        loadPluginWidgets();
+    </script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>Terminal - Universal Web Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Terminal</h1>
+        <nav class="topnav">
+            <a href="index.html">Dashboard</a>
+            <a href="terminal.html" class="active">Terminal</a>
+            <a href="alerts.html">Alerts</a>
+            <a href="discovery.html">Discovery</a>
+            <a href="plugins.html">Plugins</a>
+            <a href="widgets.html">Widgets</a>
+            <button class="button2" id="logoutBtn" style="background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border);">Logout</button>
+        </nav>
+    </header>
+    <main>
+        <div class="card">
+            <div class="terminal-container">
+                <div id="terminal"></div>
+                <input type="text" id="commandInput" placeholder="Enter command (ping &lt;ip&gt;, help)" autofocus>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        (async () => {
+            try {
+                const res = await fetch('/api/check-auth', { credentials: 'include' });
+                const data = await res.json();
+                if (!data.authenticated) { location.href = 'login.html'; return; }
+            } catch { location.href = 'login.html'; return; }
+        })();
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            location.href = 'login.html';
+        });
+
+        const terminal = document.getElementById('terminal');
+        const commandInput = document.getElementById('commandInput');
+
+        function print(message, className = '') {
+            const span = document.createElement('span');
+            span.textContent = message;
+            if (className) span.className = className;
+            terminal.appendChild(span);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function printLine(message, className = '') {
+            const div = document.createElement('div');
+            const span = document.createElement('span');
+            span.textContent = message;
+            if (className) span.className = className;
+            div.appendChild(span);
+            terminal.appendChild(div);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function printPrompt() {
+            printLine('$ ', 'prompt');
+        }
+
+        async function executeCommand(command) {
+            const parts = command.trim().split(/\s+/);
+            const cmd = parts[0].toLowerCase();
+            const args = parts.slice(1);
+
+            switch (cmd) {
+                case '':
+                    break;
+                case 'help':
+                    printLine('Available commands:');
+                    printLine('  ping <ip>     - Ping a device');
+                    printLine('  devices       - List all devices');
+                    printLine('  clear         - Clear terminal');
+                    printLine('  help          - Show this help');
+                    break;
+                case 'clear':
+                    terminal.innerHTML = '';
+                    printPrompt();
+                    break;
+                case 'ping':
+                    if (!args[0]) {
+                        printLine('Usage: ping <ip>', 'output-error');
+                        break;
+                    }
+                    const ip = args[0];
+                    printLine(`Pinging ${ip}...`);
+                    try {
+                        const response = await fetch('/ping', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ host: ip, timeout: 5000 }),
+                            credentials: 'include'
+                        });
+                        const result = await response.json();
+                        if (result.alive) {
+                            printLine(`Reply from ${ip}: alive, latency=${result.latencyMs || '?'}ms`, 'output-success');
+                        } else {
+                            printLine(`Request timed out for ${ip}`, 'output-error');
+                        }
+                    } catch (error) {
+                        printLine(`Error: ${error.message}`, 'output-error');
+                    }
+                    break;
+                case 'devices':
+                    try {
+                        const response = await fetch('/devices', { credentials: 'include' });
+                        if (response.ok) {
+                            const devices = await response.json();
+                            if (devices.length === 0) {
+                                printLine('No devices configured.', 'output-error');
+                            } else {
+                                printLine('Configured devices:');
+                                devices.forEach(d => {
+                                    printLine(`  ${d.name} (${d.ip}) [${d.type || 'unknown'}]`, 'output-success');
+                                });
+                            }
+                        } else {
+                            printLine('Error loading devices', 'output-error');
+                        }
+                    } catch (error) {
+                        printLine(`Error: ${error.message}`, 'output-error');
+                    }
+                    break;
+                default:
+                    printLine(`Unknown command: ${cmd}`, 'output-error');
+                    printLine('Type "help" for available commands.');
+            }
+            printPrompt();
+        }
+
+        commandInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const command = commandInput.value;
+                commandInput.value = '';
+                
+                printLine(command);
+                await executeCommand(command);
+            }
+        });
+
+        printLine('Web Terminal - Universal Dashboard');
+        printLine('Type "help" for available commands.');
+        printPrompt();
+        commandInput.focus();
+    </script>
+</body>
+</html>

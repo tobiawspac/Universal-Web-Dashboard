@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>Universal Web Dashboard — Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="scene">
+  <svg viewBox="0 0 1200 800" preserveAspectRatio="none">
+    <polygon points="0,800 0,500 300,220 600,480 850,270 1100,460 1200,380 1200,800" fill="#5b53a8" opacity="0.55"/>
+    <polygon points="0,800 0,600 350,380 650,600 950,420 1200,600 1200,800" fill="#453f8f" opacity="0.75"/>
+    <polygon points="0,800 0,720 400,600 750,730 1100,600 1200,700 1200,800" fill="#2f2a6b"/>
+  </svg>
+  <div class="login-title">Universal Web Dashboard</div>
+  <div class="login-card">
+
+    <!-- Password login -->
+    <form id="loginForm">
+      <input class="field" id="loginPassword" placeholder="Heslo" type="password" required autofocus>
+      <button type="submit" class="btn">LOGIN</button>
+      <p id="loginStatus" class="status-message" style="margin-top:12px;text-align:center;"></p>
+    </form>
+
+    <!-- 2FA (hidden) -->
+    <form id="tfaForm" style="display:none;">
+      <p style="color:#9d96b8;font-size:13px;margin-bottom:12px;text-align:center;">Zadejte kód z autentikátoru:</p>
+      <input class="field" id="tfaCode" placeholder="000000" type="text" maxlength="6" required autocomplete="one-time-code">
+      <button type="submit" class="btn">OVĚŘIT</button>
+      <p id="tfaStatus" class="status-message" style="margin-top:12px;text-align:center;"></p>
+    </form>
+
+  </div>
+</div>
+
+<script>
+    // Check if already logged in
+    (async () => {
+        try {
+            const res = await fetch('/api/check-auth', { credentials: 'include' });
+            const data = await res.json();
+            if (data.authenticated) { location.href = 'index.html'; return; }
+        } catch {}
+    })();
+
+    // Password login
+    document.getElementById('loginForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const password = document.getElementById('loginPassword').value;
+        const statusEl = document.getElementById('loginStatus');
+        const btn = e.target.querySelector('button[type="submit"]');
+        statusEl.textContent = '';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password }),
+                credentials: 'include',
+            });
+            const data = await response.json();
+
+            if (response.ok && data.ok) { location.href = 'index.html'; return; }
+            if (data.requires2fa) {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('tfaForm').style.display = '';
+                document.getElementById('tfaCode').focus();
+                return;
+            }
+            statusEl.textContent = 'Nesprávné heslo.';
+            statusEl.style.color = '#e79aa3';
+        } catch {
+            statusEl.textContent = 'Server neběží. Spusť: node src/server.js';
+            statusEl.style.color = '#e79aa3';
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    // 2FA
+    document.getElementById('tfaForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const code = document.getElementById('tfaCode').value.trim();
+        const statusEl = document.getElementById('tfaStatus');
+        const btn = e.target.querySelector('button[type="submit"]');
+        statusEl.textContent = '';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: document.getElementById('loginPassword').value, totpCode: code }),
+                credentials: 'include',
+            });
+            const data = await response.json();
+            if (response.ok && data.ok) { location.href = 'index.html'; return; }
+            statusEl.textContent = data.error || 'Nesprávný kód.';
+            statusEl.style.color = '#e79aa3';
+        } catch {
+            statusEl.textContent = 'Chyba spojení.';
+            statusEl.style.color = '#e79aa3';
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+
+</script>
+</body>
+</html>

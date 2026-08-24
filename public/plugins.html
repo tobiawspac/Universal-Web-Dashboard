@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>Plugins - Universal Web Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Plugins</h1>
+        <nav class="topnav">
+            <a href="index.html">Dashboard</a>
+            <a href="terminal.html">Terminal</a>
+            <a href="alerts.html">Alerts</a>
+            <a href="discovery.html">Discovery</a>
+            <a href="plugins.html" class="active">Plugins</a>
+            <button class="button2" id="logoutBtn" style="background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border);">Logout</button>
+        </nav>
+    </header>
+    <main>
+        <!-- Upload -->
+        <div class="card">
+            <h3 style="color:var(--accent);margin-bottom:14px;">Install Plugin</h3>
+            <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+                <div style="flex:1;min-width:250px;">
+                    <label style="font-size:12px;color:var(--ink-dim);">Plugin ZIP file</label>
+                    <input type="file" id="pluginFile" accept=".zip" style="margin-top:4px;">
+                </div>
+                <button class="button1" id="uploadBtn">Upload & Install</button>
+            </div>
+            <p id="uploadStatus" style="margin-top:8px;font-size:12px;color:var(--ink-dim);"></p>
+        </div>
+
+        <!-- Installed Plugins -->
+        <div class="card">
+            <h3 style="color:var(--accent);margin-bottom:14px;">Installed Plugins</h3>
+            <div id="pluginsList" style="color:var(--ink-dim);">Loading...</div>
+        </div>
+
+        <!-- Plugin SDK Info -->
+        <div class="card">
+            <h3 style="color:var(--accent);margin-bottom:14px;">Plugin Development</h3>
+            <div style="color:var(--ink-dim);font-size:13px;line-height:1.6;">
+                <p>Create a ZIP with:</p>
+                <ul style="margin-left:20px;">
+                    <li><code>manifest.json</code> — plugin metadata</li>
+                    <li><code>check.js</code> — server-side check (optional)</li>
+                    <li><code>widget.js</code> — client-side widget (optional)</li>
+                </ul>
+                <p style="margin-top:10px;"><strong>manifest.json example:</strong></p>
+                <pre style="background:#0c141c;padding:10px;border:1px solid var(--line);font-size:12px;overflow-x:auto;">{
+  "id": "my-plugin",
+  "name": "My Plugin",
+  "version": "1.0.0",
+  "type": ["check", "widget"],
+  "configSchema": [
+    {"key": "apiUrl", "label": "API URL", "type": "string", "required": true}
+  ]
+}</pre>
+                <p style="margin-top:10px;"><strong>check.js contract:</strong></p>
+                <pre style="background:#0c141c;padding:10px;border:1px solid var(--line);font-size:12px;overflow-x:auto;">module.exports.run = async (device, config) => {
+  // config is per-device config from plugin_device_config
+  // return { alive: true, latencyMs: 42, extra: {} }
+  return { alive: true, latencyMs: 10 };
+};</pre>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        (async () => {
+            try {
+                const res = await fetch('/api/check-auth', { credentials: 'include' });
+                const data = await res.json();
+                if (!data.authenticated) { location.href = 'login.html'; return; }
+            } catch { location.href = 'login.html'; return; }
+        })();
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            location.href = 'login.html';
+        });
+
+        // Upload
+        document.getElementById('uploadBtn').addEventListener('click', async () => {
+            const fileInput = document.getElementById('pluginFile');
+            const status = document.getElementById('uploadStatus');
+            if (!fileInput.files.length) return alert('Select a ZIP file');
+
+            status.textContent = 'Uploading...';
+            const arrayBuffer = await fileInput.files[0].arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+
+            const res = await fetch('/api/plugins/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/octet-stream' },
+                body: buffer,
+                credentials: 'include',
+            });
+            const data = await res.json();
+            if (res.ok) {
+                status.textContent = `Installed: ${data.id}${data.warnings.length ? ' (warnings: ' + data.warnings.join(', ') + ')' : ''}`;
+                status.style.color = 'var(--accent)';
+                loadPlugins();
+            } else {
+                status.textContent = `Error: ${data.error}`;
+                status.style.color = 'var(--danger)';
+            }
+        });
+
+        // List plugins
+        async function loadPlugins() {
+            const res = await fetch('/api/plugins', { credentials: 'include' });
+            const plugins = await res.json();
+            const div = document.getElementById('pluginsList');
+            if (!plugins.length) { div.textContent = 'No plugins installed.'; return; }
+            div.innerHTML = plugins.map((p) => `
+                <div style="padding:10px 0;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:center;">
+                    <span style="color:var(--accent);font-weight:600;min-width:120px;">${p.name}</span>
+                    <span style="font-size:11px;color:var(--ink-dim);">v${p.version}</span>
+                    <span style="font-size:11px;">[${p.type.join(', ')}]</span>
+                    <span style="font-size:11px;color:${p.enabled ? 'var(--accent)' : 'var(--ink-dim)'}">${p.enabled ? 'ON' : 'OFF'}</span>
+                    <button class="button2" onclick="togglePlugin('${p.id}', ${p.enabled ? 0 : 1})">${p.enabled ? 'Disable' : 'Enable'}</button>
+                    <button class="button2 danger" onclick="deletePlugin('${p.id}')">Uninstall</button>
+                </div>
+            `).join('');
+        }
+
+        window.togglePlugin = async (id, enabled) => {
+            const endpoint = enabled ? 'enable' : 'disable';
+            await fetch(`/api/plugins/${id}/${endpoint}`, { method: 'POST', credentials: 'include' });
+            loadPlugins();
+        };
+
+        window.deletePlugin = async (id) => {
+            if (!confirm(`Uninstall plugin ${id}?`)) return;
+            const res = await fetch(`/api/plugins/${id}`, { method: 'DELETE', credentials: 'include' });
+            if (res.ok) loadPlugins();
+            else {
+                const data = await res.json();
+                alert(data.error || 'Failed');
+            }
+        };
+
+        loadPlugins();
+    </script>
+</body>
+</html>

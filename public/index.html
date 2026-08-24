@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>Universal Web Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Universal Web Dashboard</h1>
+        <nav class="topnav">
+            <a href="index.html" class="active">Dashboard</a>
+            <a href="terminal.html">Terminal</a>
+            <span id="connectionBadge" class="summary-pill" style="font-size:11px;padding:4px 10px;background:var(--panel);color:var(--ink-dim);border:1px solid var(--line);">Connecting...</span>
+            <button class="button2" id="logoutBtn" style="background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border);">Logout</button>
+        </nav>
+    </header>
+    <main>
+        <div class="dashboard-toolbar">
+            <div class="summary-pill" id="summaryOnline"><span class="status-dot"></span>Online: —</div>
+            <div class="summary-pill" id="summaryOffline">Offline: —</div>
+            <button class="button1" onclick="location.href='add_device.html'">+ Add device</button>
+            <button class="button2" id="refreshBtn">Refresh</button>
+        </div>
+        <div id="devices" class="device-grid"></div>
+        <p id="emptyState" class="empty-state" style="display:none;color:var(--ink-dim);padding:20px;">No devices yet. Add one to get started.</p>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        (async () => {
+            try {
+                const res = await fetch('/api/check-auth', { credentials: 'include' });
+                const data = await res.json();
+                if (!data.authenticated) { location.href = 'login.html'; return; }
+            } catch { location.href = 'login.html'; return; }
+        })();
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            location.href = 'login.html';
+        });
+
+        const TYPE_ICON = { router: '📶', switch: '🔀', server: '🖥️', camera: '📷', pc: '💻', printer: '🖨️' };
+
+        async function fetchSummary() {
+            const res = await fetch('/api/dashboard-summary', { credentials: 'include' });
+            if (!res.ok) return [];
+            return res.json();
+        }
+
+        async function deleteDevice(name, ip) {
+            const res = await fetch('/devices', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, ip, _delete: true }),
+                credentials: 'include'
+            });
+            return res.ok;
+        }
+
+        function buildCard(device) {
+            const card = document.createElement('div');
+            const alive = device.live && device.live.alive;
+            card.className = 'device-card' + (alive ? '' : ' offline');
+            card.setAttribute('data-ip', device.ip);
+
+            card.innerHTML = `
+                <div class="device-card-top">
+                    <span class="device-card-icon">${TYPE_ICON[device.type] || '📟'}</span>
+                    <span class="status-dot"></span>
+                </div>
+                <div class="device-card-name">${device.name}</div>
+                <div class="device-card-ip">${device.ip}${device.port ? ':' + device.port : ''}</div>
+                <div class="device-card-meta">
+                    <span>${alive ? (device.live.latencyMs != null ? device.live.latencyMs + ' ms' : 'ping ok') : 'offline'}</span>
+                    <span>Uptime 24h: ${device.summary && device.summary.totalChecks ? device.summary.uptimePercent + '%' : '—'}</span>
+                </div>
+                <div class="device-card-actions">
+                    <button class="button2 open-btn">Open</button>
+                    <button class="button2 danger delete-btn">Delete</button>
+                </div>
+            `;
+
+            card.querySelector('.device-card-name').onclick = card.querySelector('.open-btn').onclick = () => {
+                window.location.href = `device_page.html?name=${encodeURIComponent(device.name)}&ip=${encodeURIComponent(device.ip)}&type=${encodeURIComponent(device.type || 'router')}`;
+            };
+            card.querySelector('.delete-btn').onclick = async (e) => {
+                e.stopPropagation();
+                if (confirm(`Delete ${device.name}?`)) {
+                    if (await deleteDevice(device.name, device.ip)) render();
+                }
+            };
+
+            return card;
+        }
+
+        async function render() {
+            const container = document.getElementById('devices');
+            const emptyState = document.getElementById('emptyState');
+            const devices = await fetchSummary();
+
+            container.innerHTML = '';
+            emptyState.style.display = devices.length ? 'none' : '';
+
+            const onlineCount = devices.filter((d) => d.live && d.live.alive).length;
+            document.getElementById('summaryOnline').innerHTML = `<span class="status-dot"></span>Online: ${onlineCount}`;
+            document.getElementById('summaryOffline').textContent = `Offline: ${devices.length - onlineCount}`;
+
+            devices.forEach((device) => container.appendChild(buildCard(device)));
+        }
+
+        document.getElementById('refreshBtn').addEventListener('click', render);
+
+        render();
+        setInterval(render, 30000);
+
+        // WebSocket live updates
+        const badge = document.getElementById('connectionBadge');
+        let socket;
+        try {
+            socket = io({ transports: ['polling', 'websocket'] });
+        } catch {}
+
+        if (socket) {
+            socket.on('connect', () => {
+                badge.textContent = 'Live';
+                badge.style.color = 'var(--accent)';
+                badge.style.borderColor = 'var(--accent)';
+            });
+            socket.on('disconnect', () => {
+                badge.textContent = 'Polling';
+                badge.style.color = 'var(--ink-dim)';
+                badge.style.borderColor = 'var(--line)';
+            });
+            socket.on('connect_error', () => {
+                badge.textContent = 'Polling';
+                badge.style.color = 'var(--ink-dim)';
+                badge.style.borderColor = 'var(--line)';
+            });
+
+            socket.on('device:update', (payload) => {
+                const card = document.querySelector(`[data-ip="${payload.ip}"]`);
+                if (!card) return;
+                card.classList.toggle('offline', !payload.alive);
+                const meta = card.querySelector('.device-card-meta span:first-child');
+                if (meta) {
+                    meta.textContent = payload.alive
+                        ? (payload.latencyMs != null ? payload.latencyMs + ' ms' : 'online')
+                        : 'offline';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

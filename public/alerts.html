@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>Alerts - Universal Web Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Alerting</h1>
+        <nav class="topnav">
+            <a href="index.html">Dashboard</a>
+            <a href="terminal.html">Terminal</a>
+            <a href="alerts.html" class="active">Alerts</a>
+            <button class="button2" id="logoutBtn" style="background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border);">Logout</button>
+        </nav>
+    </header>
+    <main>
+        <!-- Add Channel -->
+        <div class="card">
+            <h3 style="color:var(--accent);margin-bottom:14px;">Add Alert Channel</h3>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+                <div style="flex:1;min-width:150px;">
+                    <label style="font-size:12px;color:var(--ink-dim);">Type</label>
+                    <select id="channelType" style="width:100%;padding:10px;background:#0c141c;border:1px solid var(--line);color:var(--ink);font-size:13px;margin-top:4px;">
+                        <option value="webhook">Webhook</option>
+                        <option value="discord">Discord</option>
+                        <option value="telegram">Telegram</option>
+                        <option value="email">Email (SMTP)</option>
+                    </select>
+                </div>
+                <div style="flex:1;min-width:150px;">
+                    <label style="font-size:12px;color:var(--ink-dim);">Name</label>
+                    <input type="text" id="channelName" placeholder="My Alert Channel" style="margin-top:4px;">
+                </div>
+                <div id="channelFields" style="flex:2;min-width:250px;display:flex;gap:8px;flex-wrap:wrap;"></div>
+                <button class="button1" id="addChannelBtn">Add</button>
+            </div>
+        </div>
+
+        <!-- Existing Channels -->
+        <div class="card">
+            <h3 style="color:var(--accent);margin-bottom:14px;">Channels</h3>
+            <div id="channelsList" style="color:var(--ink-dim);">Loading...</div>
+        </div>
+
+        <!-- Alert Log -->
+        <div class="card">
+            <h3 style="color:var(--accent);margin-bottom:14px;">Alert History</h3>
+            <div id="alertLog" style="color:var(--ink-dim);max-height:400px;overflow-y:auto;">Loading...</div>
+        </div>
+
+        <!-- Maintenance Windows -->
+        <div class="card">
+            <h3 style="color:var(--accent);margin-bottom:14px;">Maintenance Windows</h3>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+                <div style="flex:1;min-width:120px;">
+                    <label style="font-size:12px;color:var(--ink-dim);">Device</label>
+                    <select id="maintDevice" style="width:100%;padding:10px;background:#0c141c;border:1px solid var(--line);color:var(--ink);font-size:13px;margin-top:4px;"></select>
+                </div>
+                <div style="flex:1;min-width:150px;">
+                    <label style="font-size:12px;color:var(--ink-dim);">Start</label>
+                    <input type="datetime-local" id="maintStart" style="margin-top:4px;">
+                </div>
+                <div style="flex:1;min-width:150px;">
+                    <label style="font-size:12px;color:var(--ink-dim);">End</label>
+                    <input type="datetime-local" id="maintEnd" style="margin-top:4px;">
+                </div>
+                <div style="flex:1;min-width:120px;">
+                    <label style="font-size:12px;color:var(--ink-dim);">Note</label>
+                    <input type="text" id="maintNote" placeholder="Scheduled work" style="margin-top:4px;">
+                </div>
+                <button class="button1" id="addMaintBtn">Add</button>
+            </div>
+            <div id="maintList" style="margin-top:12px;color:var(--ink-dim);"></div>
+        </div>
+    </main>
+
+    <script>
+        (async () => {
+            try {
+                const res = await fetch('/api/check-auth', { credentials: 'include' });
+                const data = await res.json();
+                if (!data.authenticated) { location.href = 'login.html'; return; }
+            } catch { location.href = 'login.html'; return; }
+        })();
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            location.href = 'login.html';
+        });
+
+        // --- Channel Type Fields ---
+        const FIELDS = {
+            webhook: [{ key: 'url', label: 'Webhook URL', placeholder: 'https://...' }],
+            discord: [{ key: 'webhookUrl', label: 'Discord Webhook URL', placeholder: 'https://discord.com/api/webhooks/...' }],
+            telegram: [
+                { key: 'botToken', label: 'Bot Token', placeholder: '123456:ABC...' },
+                { key: 'chatId', label: 'Chat ID', placeholder: '-100...' },
+            ],
+            email: [
+                { key: 'smtp_host', label: 'SMTP Host', placeholder: 'smtp.gmail.com' },
+                { key: 'smtp_port', label: 'SMTP Port', placeholder: '587', value: '587' },
+                { key: 'smtp_user', label: 'SMTP User', placeholder: 'user@gmail.com' },
+                { key: 'smtp_pass', label: 'SMTP Password', placeholder: '••••', type: 'password' },
+                { key: 'to', label: 'To Email', placeholder: 'admin@example.com' },
+            ],
+        };
+
+        const typeSelect = document.getElementById('channelType');
+        const fieldsDiv = document.getElementById('channelFields');
+
+        function renderFields() {
+            const fields = FIELDS[typeSelect.value] || [];
+            fieldsDiv.innerHTML = fields.map((f) =>
+                `<div style="flex:1;min-width:120px;">
+                    <label style="font-size:12px;color:var(--ink-dim);">${f.label}</label>
+                    <input type="${f.type || 'text'}" data-key="${f.key}" placeholder="${f.placeholder || ''}" value="${f.value || ''}" style="width:100%;margin-top:4px;padding:10px;background:#0c141c;border:1px solid var(--line);color:var(--ink);font-size:13px;">
+                </div>`
+            ).join('');
+        }
+        typeSelect.addEventListener('change', renderFields);
+        renderFields();
+
+        // --- Add Channel ---
+        document.getElementById('addChannelBtn').addEventListener('click', async () => {
+            const type = typeSelect.value;
+            const name = document.getElementById('channelName').value.trim();
+            if (!name) return alert('Enter a channel name');
+            const config = {};
+            fieldsDiv.querySelectorAll('input').forEach((el) => {
+                const key = el.dataset.key;
+                let val = el.value.trim();
+                if (key === 'smtp_port') val = Number(val) || 587;
+                config[key] = val;
+            });
+            const res = await fetch('/api/alerts/channels', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, name, config }),
+                credentials: 'include',
+            });
+            if (res.ok) {
+                document.getElementById('channelName').value = '';
+                fieldsDiv.innerHTML = '';
+                loadChannels();
+            } else {
+                const err = await res.json();
+                alert(err.error || 'Failed');
+            }
+        });
+
+        async function loadChannels() {
+            const res = await fetch('/api/alerts/channels', { credentials: 'include' });
+            const channels = await res.json();
+            const div = document.getElementById('channelsList');
+            if (!channels.length) { div.textContent = 'No channels configured.'; return; }
+            div.innerHTML = channels.map((ch) => `
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);">
+                    <span style="color:var(--accent);font-weight:600;min-width:80px;">${ch.type}</span>
+                    <span style="flex:1;">${ch.name}</span>
+                    <span style="font-size:11px;color:${ch.enabled ? 'var(--accent)' : 'var(--ink-dim)'}">${ch.enabled ? 'ON' : 'OFF'}</span>
+                    <button class="button2" onclick="testChannel(${ch.id})">Test</button>
+                    <button class="button2" onclick="toggleChannel(${ch.id}, ${ch.enabled ? 0 : 1})">${ch.enabled ? 'Disable' : 'Enable'}</button>
+                    <button class="button2 danger" onclick="deleteChannel(${ch.id})">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        window.testChannel = async (id) => {
+            const res = await fetch(`/api/alerts/channels/${id}/test`, { method: 'POST', credentials: 'include' });
+            const data = await res.json();
+            alert(data.success ? 'Test sent!' : `Failed: ${data.error}`);
+        };
+
+        window.toggleChannel = async (id, enabled) => {
+            await fetch(`/api/alerts/channels/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled }),
+                credentials: 'include',
+            });
+            loadChannels();
+        };
+
+        window.deleteChannel = async (id) => {
+            if (!confirm('Delete this channel?')) return;
+            await fetch(`/api/alerts/channels/${id}`, { method: 'DELETE', credentials: 'include' });
+            loadChannels();
+        };
+
+        // --- Alert Log ---
+        async function loadLog() {
+            const res = await fetch('/api/alerts/log?limit=50', { credentials: 'include' });
+            const rows = await res.json();
+            const div = document.getElementById('alertLog');
+            if (!rows.length) { div.textContent = 'No alerts yet.'; return; }
+            div.innerHTML = rows.map((r) => {
+                const color = r.event_type === 'device_down' ? 'var(--danger)' : 'var(--accent)';
+                const icon = r.event_type === 'device_down' ? '🔴' : '🟢';
+                const time = new Date(r.sent_at).toLocaleString('cs');
+                return `<div style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;">
+                    <span>${icon}</span>
+                    <span style="color:${color};font-weight:600;min-width:80px;">${r.event_type}</span>
+                    <span style="flex:1;">${r.device_name || '?'} — ${r.message}</span>
+                    <span style="font-size:11px;color:var(--ink-dim);">${time}</span>
+                    ${r.suppressed ? '<span style="font-size:10px;color:var(--ink-dim);">[suppressed]</span>' : ''}
+                    ${r.success === 0 ? '<span style="font-size:10px;color:var(--danger);">[failed]</span>' : ''}
+                </div>`;
+            }).join('');
+        }
+
+        // --- Maintenance ---
+        async function loadDevices() {
+            const res = await fetch('/devices', { credentials: 'include' });
+            const devices = await res.json();
+            const sel = document.getElementById('maintDevice');
+            sel.innerHTML = devices.map((d) => `<option value="">${d.name} (${d.ip})</option>`).join('');
+            // Store for ID lookup
+            sel._devices = devices;
+        }
+
+        document.getElementById('addMaintBtn').addEventListener('click', async () => {
+            const sel = document.getElementById('maintDevice');
+            const idx = sel.selectedIndex;
+            const devices = sel._devices || [];
+            if (idx < 0 || !devices[idx]) return alert('Select a device');
+            const device = devices[idx];
+            const deviceId = device.id;
+            const startsAt = new Date(document.getElementById('maintStart').value).getTime();
+            const endsAt = new Date(document.getElementById('maintEnd').value).getTime();
+            const note = document.getElementById('maintNote').value.trim();
+            if (!startsAt || !endsAt || startsAt >= endsAt) return alert('Set valid start/end times');
+            const res = await fetch('/api/maintenance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ deviceId, startsAt, endsAt, note }),
+                credentials: 'include',
+            });
+            if (res.ok) loadMaintenance();
+            else alert('Failed');
+        });
+
+        async function loadMaintenance() {
+            const res = await fetch('/api/maintenance', { credentials: 'include' });
+            const rows = await res.json();
+            const div = document.getElementById('maintList');
+            if (!rows.length) { div.textContent = 'No maintenance windows.'; return; }
+            div.innerHTML = rows.map((r) => {
+                const start = new Date(r.starts_at).toLocaleString('cs');
+                const end = new Date(r.ends_at).toLocaleString('cs');
+                return `<div style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;">
+                    <span style="flex:1;">${r.device_name || 'Device #' + r.device_id}</span>
+                    <span style="font-size:11px;color:var(--ink-dim);">${start} — ${end}</span>
+                    ${r.note ? `<span style="font-size:11px;color:var(--ink-dim);">(${r.note})</span>` : ''}
+                    <button class="button2 danger" onclick="deleteMaint(${r.id})">Delete</button>
+                </div>`;
+            }).join('');
+        }
+
+        window.deleteMaint = async (id) => {
+            await fetch(`/api/maintenance/${id}`, { method: 'DELETE', credentials: 'include' });
+            loadMaintenance();
+        };
+
+        // Init
+        loadChannels();
+        loadLog();
+        loadDevices();
+        loadMaintenance();
+    </script>
+</body>
+</html>

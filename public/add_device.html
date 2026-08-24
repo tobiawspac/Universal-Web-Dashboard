@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>Add Device - Universal Web Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Add Device</h1>
+        <nav class="topnav">
+            <a href="index.html">Dashboard</a>
+            <a href="terminal.html">Terminal</a>
+            <a href="alerts.html">Alerts</a>
+            <a href="discovery.html">Discovery</a>
+            <a href="plugins.html">Plugins</a>
+            <a href="widgets.html">Widgets</a>
+            <button class="button2" id="logoutBtn" style="background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border);">Logout</button>
+        </nav>
+    </header>
+    <main>
+        <div class="card">
+            <div id="addDeviceForm">
+                <input type="text" id="deviceName" placeholder="Device Name">
+                <input type="text" id="deviceIP" placeholder="Device IP / hostname">
+                <select id="deviceType">
+                    <option value="router">Router</option>
+                    <option value="switch">Switch</option>
+                    <option value="server">Server</option>
+                    <option value="camera">Camera</option>
+                    <option value="pc">PC</option>
+                    <option value="printer">Printer</option>
+                </select>
+                <select id="checkType">
+                    <option value="ping">Check: Ping</option>
+                    <option value="http">Check: HTTP(S)</option>
+                    <option value="tcp">Check: TCP Port</option>
+                </select>
+                <input type="number" id="devicePort" placeholder="Port (http/tcp)" style="display:none" min="1" max="65535">
+                <input type="text" id="httpPath" placeholder="/path (http only)" style="display:none">
+                <label id="httpsLabel" style="display:none;color:var(--ink-dim);">
+                    <input type="checkbox" id="useHttps"> HTTPS
+                </label>
+                <input type="text" id="deviceNotes" placeholder="Notes (optional)">
+                <label style="color:var(--ink-dim);display:flex;align-items:center;gap:6px;">
+                    <input type="checkbox" id="snmpEnabled"> Enable SNMP monitoring
+                </label>
+                <input type="text" id="snmpCommunity" placeholder="SNMP community (default: public)" style="display:none;">
+                <button class="button2" id="pingIp">Test Check</button>
+            </div>
+            <div id="addDeviceButtons" style="display:flex;gap:12px;margin-top:16px;">
+                <button class="button2" onclick="location.href='index.html'">Back</button>
+                <button class="button1" id="addDeviceButton">Add Device</button>
+            </div>
+            <p id="statusMessage" class="status-message"></p>
+        </div>
+    </main>
+
+    <script>
+        (async () => {
+            try {
+                const res = await fetch('/api/check-auth', { credentials: 'include' });
+                const data = await res.json();
+                if (!data.authenticated) { location.href = 'login.html'; return; }
+            } catch { location.href = 'login.html'; return; }
+        })();
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            location.href = 'login.html';
+        });
+
+        function setStatus(message, isError = false) {
+            const status = document.getElementById('statusMessage');
+            status.textContent = message;
+            status.style.color = isError ? 'var(--danger)' : 'var(--accent)';
+        }
+
+        const checkTypeSelect = document.getElementById('checkType');
+        const portInput = document.getElementById('devicePort');
+        const httpPathInput = document.getElementById('httpPath');
+        const httpsLabel = document.getElementById('httpsLabel');
+
+        checkTypeSelect.addEventListener('change', () => {
+            const type = checkTypeSelect.value;
+            portInput.style.display = (type === 'http' || type === 'tcp') ? '' : 'none';
+            httpPathInput.style.display = (type === 'http') ? '' : 'none';
+            httpsLabel.style.display = (type === 'http') ? '' : 'none';
+        });
+
+        const snmpEnabled = document.getElementById('snmpEnabled');
+        const snmpCommunity = document.getElementById('snmpCommunity');
+        snmpEnabled.addEventListener('change', () => {
+            snmpCommunity.style.display = snmpEnabled.checked ? '' : 'none';
+        });
+
+        function currentCheckConfig() {
+            return {
+                checkType: checkTypeSelect.value,
+                port: portInput.value ? Number(portInput.value) : undefined,
+                httpPath: httpPathInput.value || undefined,
+                https: document.getElementById('useHttps').checked
+            };
+        }
+
+        document.getElementById('pingIp').addEventListener('click', async function () {
+            const ip = document.getElementById('deviceIP').value.trim();
+            if (!ip) { setStatus('Zadejte IP adresu.', true); return; }
+
+            this.disabled = true;
+            this.textContent = 'Checking...';
+            setStatus('Kontroluji dostupnost...');
+
+            try {
+                const response = await fetch('/check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ host: ip, timeout: 5000, ...currentCheckConfig() }),
+                    credentials: 'include'
+                });
+                const result = await response.json();
+                setStatus(result.alive
+                    ? `Zařízení ${ip} je online${result.latencyMs != null ? ' (' + result.latencyMs + ' ms)' : ''}.`
+                    : `Zařízení ${ip} není dostupné.${result.error ? ' (' + result.error + ')' : ''}`);
+            } catch (error) {
+                setStatus('Server error. Check if node app.js is running.', true);
+            } finally {
+                this.disabled = false;
+                this.textContent = 'Test Check';
+            }
+        });
+
+        document.getElementById('addDeviceButton').addEventListener('click', async function () {
+            const name = document.getElementById('deviceName').value.trim();
+            const ip = document.getElementById('deviceIP').value.trim();
+            const type = document.getElementById('deviceType').value;
+            const notes = document.getElementById('deviceNotes').value.trim();
+
+            if (!name || !ip) { setStatus('Zadejte jméno a IP adresu.', true); return; }
+
+            try {
+                const response = await fetch('/devices', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name, ip, type, notes,
+                        ...currentCheckConfig(),
+                        snmp_enabled: snmpEnabled.checked ? 1 : 0,
+                        snmp_community: snmpCommunity.value.trim() || 'public',
+                    }),
+                    credentials: 'include'
+                });
+                if (response.ok) {
+                    setStatus('Zařízení přidáno.');
+                    setTimeout(() => location.href = 'index.html', 500);
+                } else {
+                    const error = await response.json();
+                    setStatus(error.error || 'Chyba při přidávání zařízení.', true);
+                }
+            } catch (error) {
+                setStatus('Server error. Check if node app.js is running.', true);
+            }
+        });
+    </script>
+</body>
+</html>

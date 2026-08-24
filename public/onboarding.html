@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>Welcome — Universal Web Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .onboard-step { display:none; }
+        .onboard-step.active { display:block; }
+        .step-dots { display:flex;gap:8px;justify-content:center;margin:20px 0; }
+        .step-dot { width:10px;height:10px;border-radius:50%;background:var(--line);transition:background 0.3s; }
+        .step-dot.active { background:var(--accent); }
+        .step-dot.done { background:var(--accent);opacity:0.5; }
+        .onboard-nav { display:flex;justify-content:space-between;margin-top:24px; }
+        .feature-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0; }
+        .feature-card { padding:16px;background:var(--panel);border:1px solid var(--line); }
+        .feature-card h4 { color:var(--accent);margin:0 0 6px;font-size:14px; }
+        .feature-card p { color:var(--ink-dim);font-size:12px;margin:0;line-height:1.5; }
+        @media(max-width:600px) { .feature-grid { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Welcome</h1>
+    </header>
+    <main style="max-width:700px;margin:0 auto;">
+        <!-- Step 1: Welcome -->
+        <div class="card onboard-step active" id="step1">
+            <div style="text-align:center;padding:20px 0;">
+                <div style="font-size:48px;margin-bottom:12px;">🌐</div>
+                <h2 style="color:var(--accent);margin:0 0 8px;">Universal Web Dashboard</h2>
+                <p style="color:var(--ink-dim);font-size:14px;">Network monitoring, alerting, and device management in one place.</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>📡 Real-time Monitoring</h4>
+                    <p>Live device status updates via WebSocket. See latency, uptime, and availability instantly.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🔔 Alerting</h4>
+                    <p>Get notified via Discord, Telegram, email, or webhook when devices go down or recover.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🔍 Network Discovery</h4>
+                    <p>Auto-scan your network to find devices. No manual IP entry needed.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🧩 Plugin System</h4>
+                    <p>Extend with custom checks and widgets. Upload your own plugins as ZIP files.</p>
+                </div>
+            </div>
+            <div class="onboard-nav">
+                <span></span>
+                <button class="button1" onclick="goStep(2)">Get Started →</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Set Password -->
+        <div class="card onboard-step" id="step2">
+            <h3 style="color:var(--accent);margin-bottom:14px;">Set Your Password</h3>
+            <p style="color:var(--ink-dim);font-size:13px;margin-bottom:16px;">
+                Choose a strong password to secure your dashboard. You can change it later in Settings.
+            </p>
+            <div style="max-width:400px;">
+                <label style="font-size:12px;color:var(--ink-dim);">New Password</label>
+                <input type="password" id="onboardPassword" placeholder="Enter password" style="margin-bottom:12px;">
+                <label style="font-size:12px;color:var(--ink-dim);">Confirm Password</label>
+                <input type="password" id="onboardPasswordConfirm" placeholder="Confirm password" style="margin-bottom:12px;">
+                <p id="onboardPassStatus" style="font-size:12px;"></p>
+            </div>
+            <div class="onboard-nav">
+                <button class="button2" onclick="goStep(1)">← Back</button>
+                <button class="button1" id="onboardSetPass">Set Password</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Add First Device -->
+        <div class="card onboard-step" id="step3">
+            <h3 style="color:var(--accent);margin-bottom:14px;">Add Your First Device</h3>
+            <p style="color:var(--ink-dim);font-size:13px;margin-bottom:16px;">
+                Add a device to start monitoring. You can always add more later from the Dashboard.
+            </p>
+            <div style="max-width:400px;">
+                <label style="font-size:12px;color:var(--ink-dim);">Device Name</label>
+                <input type="text" id="onboardDeviceName" placeholder="My Router" style="margin-bottom:12px;">
+                <label style="font-size:12px;color:var(--ink-dim);">IP Address</label>
+                <input type="text" id="onboardDeviceIP" placeholder="192.168.1.1" style="margin-bottom:12px;">
+                <label style="font-size:12px;color:var(--ink-dim);">Type</label>
+                <select id="onboardDeviceType" style="width:100%;margin-bottom:12px;">
+                    <option value="router">Router</option>
+                    <option value="switch">Switch</option>
+                    <option value="server">Server</option>
+                    <option value="camera">Camera</option>
+                    <option value="pc">PC</option>
+                    <option value="printer">Printer</option>
+                </select>
+                <button class="button2" id="onboardTestDevice" style="margin-bottom:8px;">Test Connection</button>
+                <p id="onboardTestResult" style="font-size:12px;"></p>
+            </div>
+            <div class="onboard-nav">
+                <button class="button2" onclick="goStep(2)">← Back</button>
+                <div style="display:flex;gap:8px;">
+                    <button class="button2" onclick="goStep(4)">Skip</button>
+                    <button class="button1" id="onboardAddDevice">Add Device</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Done -->
+        <div class="card onboard-step" id="step4">
+            <div style="text-align:center;padding:30px 0;">
+                <div style="font-size:48px;margin-bottom:12px;">✅</div>
+                <h2 style="color:var(--accent);margin:0 0 12px;">You're All Set!</h2>
+                <p style="color:var(--ink-dim);font-size:14px;max-width:500px;margin:0 auto 20px;">
+                    Your dashboard is ready. Here's what you can do next:
+                </p>
+                <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                    <a href="index.html" class="button1" style="text-decoration:none;">Go to Dashboard</a>
+                    <a href="alerts.html" class="button2" style="text-decoration:none;">Set Up Alerts</a>
+                    <a href="discovery.html" class="button2" style="text-decoration:none;">Scan Network</a>
+                    <a href="settings.html" class="button2" style="text-decoration:none;">Settings</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="step-dots">
+            <div class="step-dot active" id="dot1"></div>
+            <div class="step-dot" id="dot2"></div>
+            <div class="step-dot" id="dot3"></div>
+            <div class="step-dot" id="dot4"></div>
+        </div>
+    </main>
+
+    <script>
+        let currentStep = 1;
+        let onboardToken = null;
+
+        function goStep(n) {
+            document.querySelectorAll('.onboard-step').forEach((el) => el.classList.remove('active'));
+            document.querySelectorAll('.step-dot').forEach((el) => el.classList.remove('active'));
+            for (let i = 1; i < n; i++) document.getElementById('dot' + i).classList.add('done');
+            document.getElementById('step' + n).classList.add('active');
+            document.getElementById('dot' + n).classList.add('active');
+            currentStep = n;
+        }
+
+        // Check if already authenticated — if so, skip to step 4
+        (async () => {
+            try {
+                const res = await fetch('/api/check-auth', { credentials: 'include' });
+                const data = await res.json();
+                if (data.authenticated) {
+                    goStep(4);
+                }
+            } catch {}
+        })();
+
+        // Step 2: Set password
+        document.getElementById('onboardSetPass').addEventListener('click', async () => {
+            const pass = document.getElementById('onboardPassword').value;
+            const confirm = document.getElementById('onboardPasswordConfirm').value;
+            const status = document.getElementById('onboardPassStatus');
+
+            if (!pass || pass.length < 4) {
+                status.textContent = 'Password must be at least 4 characters.';
+                status.style.color = 'var(--danger)';
+                return;
+            }
+            if (pass !== confirm) {
+                status.textContent = 'Passwords do not match.';
+                status.style.color = 'var(--danger)';
+                return;
+            }
+
+            // Set password via login endpoint (creates session) then change it
+            const loginRes = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: 'admin123' }),
+                credentials: 'include',
+            });
+            if (loginRes.ok) {
+                const changeRes = await fetch('/api/settings/password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentPassword: 'admin123', newPassword: pass }),
+                    credentials: 'include',
+                });
+                if (changeRes.ok) {
+                    status.textContent = 'Password set!';
+                    status.style.color = 'var(--accent)';
+                    setTimeout(() => goStep(3), 800);
+                } else {
+                    const err = await changeRes.json();
+                    status.textContent = err.error || 'Failed';
+                    status.style.color = 'var(--danger)';
+                }
+            } else {
+                status.textContent = 'Login failed';
+                status.style.color = 'var(--danger)';
+            }
+        });
+
+        // Step 3: Test device
+        document.getElementById('onboardTestDevice').addEventListener('click', async () => {
+            const ip = document.getElementById('onboardDeviceIP').value.trim();
+            if (!ip) { alert('Enter an IP address'); return; }
+            const status = document.getElementById('onboardTestResult');
+            status.textContent = 'Testing...';
+            status.style.color = 'var(--ink-dim)';
+            const res = await fetch('/ping', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ host: ip, timeout: 3000 }),
+                credentials: 'include',
+            });
+            const data = await res.json();
+            if (data.alive) {
+                status.textContent = `Online (${data.latencyMs}ms)`;
+                status.style.color = 'var(--accent)';
+            } else {
+                status.textContent = 'Offline or unreachable';
+                status.style.color = 'var(--danger)';
+            }
+        });
+
+        // Step 3: Add device
+        document.getElementById('onboardAddDevice').addEventListener('click', async () => {
+            const name = document.getElementById('onboardDeviceName').value.trim();
+            const ip = document.getElementById('onboardDeviceIP').value.trim();
+            const type = document.getElementById('onboardDeviceType').value;
+            if (!name || !ip) { alert('Enter name and IP'); return; }
+
+            const res = await fetch('/devices', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, ip, type }),
+                credentials: 'include',
+            });
+            if (res.ok) goStep(4);
+            else alert('Failed to add device');
+        });
+    </script>
+</body>
+</html>

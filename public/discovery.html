@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>Discovery - Universal Web Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Network Discovery</h1>
+        <nav class="topnav">
+            <a href="index.html">Dashboard</a>
+            <a href="terminal.html">Terminal</a>
+            <a href="alerts.html">Alerts</a>
+            <a href="discovery.html" class="active">Discovery</a>
+            <button class="button2" id="logoutBtn" style="background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border);">Logout</button>
+        </nav>
+    </header>
+    <main>
+        <!-- Scan Controls -->
+        <div class="card">
+            <h3 style="color:var(--accent);margin-bottom:14px;">Scan Network</h3>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+                <div style="flex:1;min-width:200px;">
+                    <label style="font-size:12px;color:var(--ink-dim);">Subnet</label>
+                    <select id="subnetSelect" style="width:100%;padding:10px;background:#0c141c;border:1px solid var(--line);color:var(--ink);font-size:13px;margin-top:4px;">
+                        <option value="">Loading...</option>
+                    </select>
+                </div>
+                <div style="flex:1;min-width:200px;">
+                    <label style="font-size:12px;color:var(--ink-dim);">Or enter CIDR manually</label>
+                    <input type="text" id="cidrInput" placeholder="192.168.1.0/24" style="margin-top:4px;">
+                </div>
+                <button class="button1" id="scanBtn">Start Scan</button>
+            </div>
+            <div id="scanProgress" style="display:none;margin-top:14px;">
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-dim);margin-bottom:4px;">
+                    <span id="progressText">Scanning...</span>
+                    <span id="progressCount">0/0</span>
+                </div>
+                <div style="width:100%;height:6px;background:var(--line);border-radius:3px;">
+                    <div id="progressBar" style="width:0%;height:100%;background:var(--accent);border-radius:3px;transition:width 0.3s;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="card">
+            <h3 style="color:var(--accent);margin-bottom:14px;">Discovered Devices</h3>
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <button class="button1" id="adoptBtn">Adopt Selected</button>
+                <button class="button2" id="ignoreBtn">Ignore Selected</button>
+                <span id="selectedCount" style="font-size:12px;color:var(--ink-dim);align-self:center;"></span>
+            </div>
+            <div id="resultsTable" style="color:var(--ink-dim);">No scan results yet.</div>
+        </div>
+
+        <!-- Adopt Dialog (hidden) -->
+        <div id="adoptDialog" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:100;justify-content:center;align-items:center;">
+            <div style="background:var(--bg);border:1px solid var(--accent);padding:24px;width:360px;">
+                <h3 style="color:var(--accent);margin-bottom:14px;">Adopt Device</h3>
+                <input type="hidden" id="adoptIp">
+                <div style="margin-bottom:10px;">
+                    <label style="font-size:12px;color:var(--ink-dim);">Name</label>
+                    <input type="text" id="adoptName" placeholder="My Device" style="width:100%;margin-top:4px;">
+                </div>
+                <div style="margin-bottom:10px;">
+                    <label style="font-size:12px;color:var(--ink-dim);">Type</label>
+                    <select id="adoptType" style="width:100%;padding:10px;background:#0c141c;border:1px solid var(--line);color:var(--ink);font-size:13px;margin-top:4px;">
+                        <option value="router">Router</option>
+                        <option value="switch">Switch</option>
+                        <option value="server">Server</option>
+                        <option value="camera">Camera</option>
+                        <option value="pc">PC</option>
+                        <option value="printer">Printer</option>
+                    </select>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button class="button1" id="adoptConfirmBtn">Adopt</button>
+                    <button class="button2" id="adoptCancelBtn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        (async () => {
+            try {
+                const res = await fetch('/api/check-auth', { credentials: 'include' });
+                const data = await res.json();
+                if (!data.authenticated) { location.href = 'login.html'; return; }
+            } catch { location.href = 'login.html'; return; }
+        })();
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            location.href = 'login.html';
+        });
+
+        // Load subnets
+        (async () => {
+            const res = await fetch('/api/discovery/subnets', { credentials: 'include' });
+            const subnets = await res.json();
+            const sel = document.getElementById('subnetSelect');
+            sel.innerHTML = subnets.length
+                ? subnets.map((s) => `<option value="${s.cidr}">${s.cidr} (${s.iface})</option>`).join('')
+                : '<option value="">No subnets found</option>';
+        })();
+
+        // Scan
+        let scanning = false;
+        document.getElementById('scanBtn').addEventListener('click', async () => {
+            if (scanning) return;
+            const cidr = document.getElementById('cidrInput').value.trim() || document.getElementById('subnetSelect').value;
+            if (!cidr) return alert('Select or enter a subnet');
+
+            scanning = true;
+            document.getElementById('scanBtn').textContent = 'Scanning...';
+            document.getElementById('scanBtn').disabled = true;
+            document.getElementById('scanProgress').style.display = '';
+
+            const res = await fetch('/api/discovery/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cidr }),
+                credentials: 'include',
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert(data.error || 'Scan failed');
+                resetScan();
+                return;
+            }
+        });
+
+        function resetScan() {
+            scanning = false;
+            document.getElementById('scanBtn').textContent = 'Start Scan';
+            document.getElementById('scanBtn').disabled = false;
+            document.getElementById('scanProgress').style.display = 'none';
+            document.getElementById('progressBar').style.width = '0%';
+        }
+
+        // WebSocket progress
+        try {
+            const socket = io();
+            socket.on('discovery:progress', ({ checked, total }) => {
+                const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+                document.getElementById('progressBar').style.width = pct + '%';
+                document.getElementById('progressText').textContent = `Scanning... ${pct}%`;
+                document.getElementById('progressCount').textContent = `${checked}/${total}`;
+            });
+            socket.on('discovery:done', ({ foundCount }) => {
+                resetScan();
+                document.getElementById('progressText').textContent = `Done — found ${foundCount} device(s)`;
+                loadResults();
+            });
+            socket.on('discovery:found', () => {});
+        } catch {}
+
+        // Results
+        let allResults = [];
+        async function loadResults() {
+            const res = await fetch('/api/discovery/results?status=new', { credentials: 'include' });
+            allResults = await res.json();
+            renderResults();
+        }
+
+        function renderResults() {
+            const div = document.getElementById('resultsTable');
+            if (!allResults.length) { div.textContent = 'No new devices found.'; return; }
+            div.innerHTML = `
+                <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <tr style="border-bottom:1px solid var(--line);color:var(--accent);">
+                        <th style="text-align:left;padding:8px 4px;"><input type="checkbox" id="selectAll"></th>
+                        <th style="text-align:left;padding:8px 4px;">IP</th>
+                        <th style="text-align:left;padding:8px 4px;">MAC</th>
+                        <th style="text-align:left;padding:8px 4px;">Vendor</th>
+                        <th style="text-align:left;padding:8px 4px;">SNMP</th>
+                        <th style="text-align:left;padding:8px 4px;">Action</th>
+                    </tr>
+                    ${allResults.map((r) => `
+                        <tr style="border-bottom:1px solid var(--line);">
+                            <td style="padding:8px 4px;"><input type="checkbox" class="result-check" data-id="${r.id}"></td>
+                            <td style="padding:8px 4px;">${r.ip}</td>
+                            <td style="padding:8px 4px;font-size:11px;color:var(--ink-dim);">${r.mac || '—'}</td>
+                            <td style="padding:8px 4px;">${r.vendor_guess || '—'}</td>
+                            <td style="padding:8px 4px;font-size:11px;">${r.snmp_sysdescr ? r.snmp_sysdescr.substring(0, 40) : '—'}</td>
+                            <td style="padding:8px 4px;">
+                                <button class="button1" style="padding:4px 10px;font-size:11px;" onclick="openAdopt('${r.ip}', '${r.vendor_guess || ''}')">Adopt</button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </table>
+            `;
+            document.getElementById('selectAll').addEventListener('change', (e) => {
+                document.querySelectorAll('.result-check').forEach((cb) => { cb.checked = e.target.checked; });
+                updateSelectedCount();
+            });
+            document.querySelectorAll('.result-check').forEach((cb) => {
+                cb.addEventListener('change', updateSelectedCount);
+            });
+        }
+
+        function updateSelectedCount() {
+            const count = document.querySelectorAll('.result-check:checked').length;
+            document.getElementById('selectedCount').textContent = count ? `${count} selected` : '';
+        }
+
+        // Adopt dialog
+        window.openAdopt = (ip, vendorGuess) => {
+            document.getElementById('adoptIp').value = ip;
+            document.getElementById('adoptName').value = vendorGuess ? `${vendorGuess} (${ip})` : '';
+            document.getElementById('adoptDialog').style.display = 'flex';
+        };
+        document.getElementById('adoptCancelBtn').addEventListener('click', () => {
+            document.getElementById('adoptDialog').style.display = 'none';
+        });
+        document.getElementById('adoptConfirmBtn').addEventListener('click', async () => {
+            const ip = document.getElementById('adoptIp').value;
+            const name = document.getElementById('adoptName').value.trim();
+            const type = document.getElementById('adoptType').value;
+            if (!name) return alert('Enter a name');
+            // Find discovered ID
+            const disc = allResults.find((r) => r.ip === ip);
+            const discoveredId = disc ? disc.id : null;
+            const res = await fetch('/api/discovery/adopt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ discoveredId, name, type }),
+                credentials: 'include',
+            });
+            if (res.ok) {
+                document.getElementById('adoptDialog').style.display = 'none';
+                loadResults();
+            } else {
+                const err = await res.json();
+                alert(err.error || 'Failed');
+            }
+        });
+
+        // Adopt selected
+        document.getElementById('adoptBtn').addEventListener('click', async () => {
+            const checked = document.querySelectorAll('.result-check:checked');
+            if (!checked.length) return alert('Select devices first');
+            for (const cb of checked) {
+                const id = parseInt(cb.dataset.id);
+                const disc = allResults.find((r) => r.id === id);
+                if (!disc) continue;
+                await fetch('/api/discovery/adopt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ discoveredId: id, name: disc.vendor_guess || disc.ip, type: 'router' }),
+                    credentials: 'include',
+                });
+            }
+            loadResults();
+        });
+
+        // Ignore selected
+        document.getElementById('ignoreBtn').addEventListener('click', async () => {
+            const checked = document.querySelectorAll('.result-check:checked');
+            if (!checked.length) return;
+            for (const cb of checked) {
+                const id = parseInt(cb.dataset.id);
+                await fetch('/api/discovery/ignore', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ discoveredId: id }),
+                    credentials: 'include',
+                });
+            }
+            loadResults();
+        });
+
+        loadResults();
+    </script>
+</body>
+</html>

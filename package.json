@@ -1,0 +1,43 @@
+{
+  "name": "universal-web-dashboard",
+  "version": "1.1.0",
+  "description": "Universal Web Dashboard - Device monitoring and management",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node app.js",
+    "test": "jest --forceExit --detectOpenHandles",
+    "generate-cert": "openssl req -x509 -newkey rsa:2048 -keyout certs/key.pem -out certs/cert.pem -days 365 -nodes"
+  },
+  "keywords": [
+    "dashboard",
+    "monitoring",
+    "ping",
+    "network",
+    "devices"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "adm-zip": "^0.6.0",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.7",
+    "express": "^5.2.1",
+    "multer": "^2.2.0",
+    "net-snmp": "^3.26.3",
+    "nodemailer": "^9.0.5",
+    "otplib": "^13.4.1",
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.3",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4"
+  },
+  "allowScripts": {
+    "sqlite3@5.1.7": true
+  }
+}

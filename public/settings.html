@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>Settings - Universal Web Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Settings</h1>
+        <nav class="topnav">
+            <a href="index.html">Dashboard</a>
+            <a href="terminal.html">Terminal</a>
+            <a href="alerts.html">Alerts</a>
+            <a href="discovery.html">Discovery</a>
+            <a href="plugins.html">Plugins</a>
+            <a href="widgets.html">Widgets</a>
+            <a href="settings.html" class="active">Settings</a>
+            <button class="button2" id="logoutBtn" style="background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border);">Logout</button>
+        </nav>
+    </header>
+    <main>
+        <!-- Change Password -->
+        <div class="card">
+            <h3 style="color:var(--accent);margin-bottom:14px;">Change Password</h3>
+            <div style="max-width:400px;">
+                <label style="font-size:12px;color:var(--ink-dim);">Current Password</label>
+                <input type="password" id="currentPassword" style="margin-bottom:12px;">
+                <label style="font-size:12px;color:var(--ink-dim);">New Password</label>
+                <input type="password" id="newPassword" style="margin-bottom:12px;">
+                <label style="font-size:12px;color:var(--ink-dim);">Confirm New Password</label>
+                <input type="password" id="confirmPassword" style="margin-bottom:12px;">
+                <button class="button1" id="changePasswordBtn">Change Password</button>
+                <p id="passwordStatus" style="margin-top:8px;font-size:12px;"></p>
+            </div>
+        </div>
+
+        <!-- 2FA Setup -->
+        <div class="card">
+            <h3 style="color:var(--accent);margin-bottom:14px;">Two-Factor Authentication (2FA)</h3>
+            <div id="2faStatus" style="margin-bottom:12px;"></div>
+            <div id="2faSetup" style="display:none;">
+                <p style="color:var(--ink-dim);font-size:13px;margin-bottom:12px;">
+                    Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.):
+                </p>
+                <div style="text-align:center;margin-bottom:16px;">
+                    <img id="qrCode" style="border:2px solid var(--accent);background:white;padding:8px;">
+                </div>
+                <p style="font-size:12px;color:var(--ink-dim);margin-bottom:8px;">
+                    Or enter this code manually: <code id="manualCode" style="color:var(--accent);background:var(--panel);padding:2px 6px;"></code>
+                </p>
+                <label style="font-size:12px;color:var(--ink-dim);">Enter 6-digit code to verify:</label>
+                <div style="display:flex;gap:8px;margin-top:4px;">
+                    <input type="text" id="totpCode" placeholder="000000" maxlength="6" style="width:120px;">
+                    <button class="button1" id="verify2faBtn">Verify & Enable</button>
+                </div>
+                <p id="2faStatus2" style="margin-top:8px;font-size:12px;"></p>
+            </div>
+            <button class="button2 danger" id="disable2faBtn" style="display:none;">Disable 2FA</button>
+        </div>
+
+        <!-- Sessions -->
+        <div class="card">
+            <h3 style="color:var(--accent);margin-bottom:14px;">Active Sessions</h3>
+            <div id="sessionsList" style="color:var(--ink-dim);font-size:13px;">Loading...</div>
+        </div>
+
+        <!-- General Info -->
+        <div class="card">
+            <h3 style="color:var(--accent);margin-bottom:14px;">System Info</h3>
+            <div style="color:var(--ink-dim);font-size:13px;line-height:1.8;">
+                <div>Version: 2.0.0</div>
+                <div>Node.js: <span id="nodeVersion">—</span></div>
+                <div>Ping Interval: <span id="pingInterval">—</span></div>
+                <div>Database: SQLite (devices.db)</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        (async () => {
+            try {
+                const res = await fetch('/api/check-auth', { credentials: 'include' });
+                const data = await res.json();
+                if (!data.authenticated) { location.href = 'login.html'; return; }
+            } catch { location.href = 'login.html'; return; }
+        })();
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            location.href = 'login.html';
+        });
+
+        // --- Password Change ---
+        document.getElementById('changePasswordBtn').addEventListener('click', async () => {
+            const current = document.getElementById('currentPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            const status = document.getElementById('passwordStatus');
+
+            if (!current || !newPass) { status.textContent = 'Fill in all fields.'; status.style.color = 'var(--danger)'; return; }
+            if (newPass !== confirm) { status.textContent = 'New passwords do not match.'; status.style.color = 'var(--danger)'; return; }
+            if (newPass.length < 4) { status.textContent = 'Password must be at least 4 characters.'; status.style.color = 'var(--danger)'; return; }
+
+            const res = await fetch('/api/settings/password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentPassword: current, newPassword: newPass }),
+                credentials: 'include',
+            });
+            const data = await res.json();
+            if (res.ok) {
+                status.textContent = 'Password changed successfully.';
+                status.style.color = 'var(--accent)';
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+            } else {
+                status.textContent = data.error || 'Failed';
+                status.style.color = 'var(--danger)';
+            }
+        });
+
+        // --- 2FA ---
+        async function load2faStatus() {
+            const res = await fetch('/api/settings/status', { credentials: 'include' });
+            const data = await res.json();
+            const statusDiv = document.getElementById('2faStatus');
+            const setupDiv = document.getElementById('2faSetup');
+            const disableBtn = document.getElementById('disable2faBtn');
+
+            if (data.totpEnabled) {
+                statusDiv.innerHTML = '<span style="color:var(--accent);">2FA is <strong>enabled</strong></span>';
+                setupDiv.style.display = 'none';
+                disableBtn.style.display = '';
+            } else {
+                statusDiv.innerHTML = '<span style="color:var(--ink-dim);">2FA is <strong>disabled</strong></span>';
+                setupDiv.style.display = '';
+                disableBtn.style.display = 'none';
+            }
+        }
+
+        document.getElementById('verify2faBtn').addEventListener('click', async () => {
+            const setupRes = await fetch('/api/settings/2fa/setup', { method: 'POST', credentials: 'include' });
+            const setupData = await setupRes.json();
+            if (!setupRes.ok) { alert(setupData.error); return; }
+
+            document.getElementById('qrCode').src = setupData.qrCode;
+            document.getElementById('manualCode').textContent = setupData.secret;
+            document.getElementById('qrCode').parentElement.style.display = '';
+
+            const code = document.getElementById('totpCode').value.trim();
+            if (!code || code.length !== 6) {
+                document.getElementById('2faStatus2').textContent = 'Enter a 6-digit code';
+                document.getElementById('2faStatus2').style.color = 'var(--danger)';
+                return;
+            }
+
+            const verifyRes = await fetch('/api/settings/2fa/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code }),
+                credentials: 'include',
+            });
+            const verifyData = await verifyRes.json();
+            const status2 = document.getElementById('2faStatus2');
+            if (verifyRes.ok) {
+                status2.textContent = '2FA enabled!';
+                status2.style.color = 'var(--accent)';
+                load2faStatus();
+            } else {
+                status2.textContent = verifyData.error || 'Invalid code';
+                status2.style.color = 'var(--danger)';
+            }
+        });
+
+        document.getElementById('disable2faBtn').addEventListener('click', async () => {
+            const password = prompt('Enter your password to disable 2FA:');
+            if (!password) return;
+            const res = await fetch('/api/settings/2fa/disable', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password }),
+                credentials: 'include',
+            });
+            const data = await res.json();
+            if (res.ok) load2faStatus();
+            else alert(data.error || 'Failed');
+        });
+
+        // --- Sessions ---
+        async function loadSessions() {
+            const res = await fetch('/api/settings/sessions', { credentials: 'include' });
+            const sessions = await res.json();
+            const div = document.getElementById('sessionsList');
+            if (!sessions.length) { div.textContent = 'No active sessions.'; return; }
+            div.innerHTML = sessions.map((s) =>
+                `<div style="padding:6px 0;border-bottom:1px solid var(--line);">Session: ${s.token}...</div>`
+            ).join('');
+        }
+
+        // --- System Info ---
+        document.getElementById('pingInterval').textContent = '60s (default)';
+        document.getElementById('nodeVersion').textContent = typeof process !== 'undefined' ? process.version : 'N/A';
+
+        load2faStatus();
+        loadSessions();
+
+    </script>
+</body>
+</html>

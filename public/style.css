@@ -1,0 +1,205 @@
+:root{
+  --ink:#e7edf1;
+  --ink-dim:#8ba0ac;
+  --bg:#0e1620;
+  --panel:#152030;
+  --line:#233240;
+  --accent:#45d4c0;
+  --danger:#e79aa3;
+  --danger-bg:#2a1418;
+  --danger-border:#4a2029;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Segoe UI',system-ui,sans-serif;
+  min-height:100vh;
+}
+
+/* ===== Login Scene ===== */
+.scene{
+  position:relative;
+  height:100vh;
+  min-height:600px;
+  overflow:hidden;
+  background:linear-gradient(180deg,#cfe0d8 0%,#b8b9d8 35%,#8f8fc7 60%,#7a74bd 100%);
+}
+.scene svg{position:absolute;bottom:0;left:0;width:100%;height:100%;}
+.login-title{
+  position:absolute;top:60px;left:50%;transform:translateX(-50%);
+  font-size:32px;font-weight:600;color:#fff;z-index:5;
+}
+.login-card{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:320px;z-index:5;
+  background:rgba(14,22,32,.92);backdrop-filter:blur(6px);
+  border:1px solid var(--accent);padding:28px;
+}
+.field{
+  width:100%;padding:12px 14px;margin-bottom:14px;
+  background:#0c141c;border:1px solid var(--line);color:var(--ink);
+  font-size:13px;font-family:inherit;
+}
+.field:focus{outline:none;border-color:var(--accent);}
+
+/* ===== Buttons ===== */
+.btn{
+  width:100%;padding:12px;background:var(--accent);color:#06231f;
+  border:none;font-weight:600;font-size:13px;letter-spacing:.3px;
+  font-family:inherit;cursor:pointer;
+}
+.btn:hover{background:#5be0cd;}
+
+.button1{
+  padding:8px 16px;font-size:12px;cursor:pointer;
+  background:var(--accent);color:#06231f;border:1px solid var(--accent);
+  font-family:inherit;font-weight:600;
+}
+.button1:hover{background:#5be0cd;}
+
+.button2{
+  padding:8px 16px;font-size:12px;cursor:pointer;
+  background:var(--panel);color:var(--ink-dim);border:1px solid var(--line);
+  font-family:inherit;
+}
+.button2:hover{color:var(--ink);border-color:var(--accent);}
+
+.button2.danger{
+  background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border);
+}
+.button2.danger:hover{background:#3a1a20;}
+
+/* ===== Header & Nav ===== */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;padding:16px 32px;
+}
+
+h1{
+  font-size:20px;font-weight:600;color:#fff;
+}
+
+.topnav{
+  display:flex;align-items:center;gap:8px;
+}
+.topnav a,.topnav .navbtn{
+  padding:8px 16px;font-size:12px;cursor:pointer;
+  background:var(--panel);color:var(--ink-dim);border:1px solid var(--line);
+  text-decoration:none;font-family:inherit;
+}
+.topnav a:hover,.topnav .navbtn:hover{
+  color:var(--ink);border-color:var(--accent);
+}
+.topnav a.active{
+  background:var(--accent);color:#06231f;border-color:var(--accent);
+}
+
+/* ===== Dashboard ===== */
+main{padding:0 32px 32px;}
+
+.dashboard-toolbar{
+  display:flex;align-items:center;gap:10px;margin-bottom:22px;flex-wrap:wrap;
+}
+.summary-pill{
+  padding:10px 18px;font-size:12px;background:var(--panel);border:1px solid var(--line);color:var(--ink);
+}
+
+/* ===== Device Grid ===== */
+.device-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;
+}
+.device-card{
+  padding:14px 16px;background:var(--panel);border:1px solid var(--line);
+  border-left:2px solid var(--accent);font-family:inherit;color:var(--ink);
+  cursor:pointer;transition:border-left-color 0.14s ease,transform 0.14s ease,box-shadow 0.14s ease;
+}
+.device-card:hover{
+  transform:translateY(-4px);box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+.device-card.offline{border-left-color:#5a4a4a;}
+
+.device-card-top{display:flex;align-items:center;justify-content:space-between;}
+.device-card-icon{font-size:24px;}
+.status-dot{width:7px;height:7px;background:var(--accent);display:inline-block;margin-right:7px;}
+.device-card.offline .status-dot,.status-offline{background:#5a4a4a;}
+.device-card.online .status-dot,.status-online{background:var(--accent);}
+
+.device-card-name{
+  font-size:13px;font-weight:600;color:var(--ink);margin-top:10px;cursor:pointer;
+}
+.device-card-ip{font-size:11px;color:var(--ink-dim);margin-top:2px;}
+.device-card-meta{
+  display:flex;justify-content:space-between;font-size:11px;margin-top:10px;color:var(--ink-dim);
+}
+.device-card-actions{display:flex;gap:8px;margin-top:12px;}
+
+/* ===== Cards ===== */
+.card{
+  background:var(--panel);border:1px solid var(--line);padding:24px;margin-bottom:16px;
+}
+
+/* ===== Form Elements ===== */
+input[type="text"],input[type="password"],input[type="number"],select{
+  width:100%;padding:12px 14px;margin-bottom:14px;
+  background:#0c141c;border:1px solid var(--line);color:var(--ink);
+  font-size:13px;font-family:inherit;
+}
+input:focus,select:focus{outline:none;border-color:var(--accent);}
+select{cursor:pointer;}
+option{background:#0c141c;color:var(--ink);}
+
+#addDeviceForm{
+  display:flex;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap;
+}
+
+.status-message{margin-top:8px;min-height:22px;color:var(--ink-dim);}
+
+/* ===== Device Details ===== */
+.device-details-card{display:flex;flex-direction:column;align-items:flex-start;}
+.device-icon{width:96px;height:96px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
+.device-icon svg{width:96px;height:96px;display:block;}
+.error-message{color:var(--danger);}
+
+/* ===== Terminal ===== */
+.terminal-container{display:flex;flex-direction:column;}
+#terminal{
+  background:#0c141c;color:var(--accent);border:1px solid var(--line);
+  padding:16px;height:400px;overflow-y:auto;white-space:pre-wrap;width:100%;
+  font-family:'JetBrains Mono','Segoe UI Mono',monospace;font-size:13px;
+}
+#commandInput{
+  background:#0c141c;color:var(--ink);border:1px solid var(--line);
+  padding:12px 14px;width:100%;margin-top:12px;font-size:13px;
+  font-family:'JetBrains Mono','Segoe UI Mono',monospace;
+}
+#commandInput:focus{outline:none;border-color:var(--accent);}
+.prompt{color:var(--ink-dim);}
+.output-success{color:var(--accent);}
+.output-error{color:var(--danger);}
+
+/* ===== Animations ===== */
+@keyframes fadeInUp{
+  from{opacity:0;transform:translateY(8px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.device-card{animation:fadeInUp 0.3s ease both;}
+
+/* ===== Responsive ===== */
+@media(max-width:600px){
+  header{flex-direction:column;align-items:flex-start;gap:8px;padding:12px;}
+  h1{font-size:1.2rem;}
+  .topnav{flex-wrap:wrap;}
+  main{padding:0 12px 12px;}
+  .device-grid{gap:12px;grid-template-columns:1fr;}
+  .dashboard-toolbar{gap:8px;}
+  #addDeviceForm{flex-direction:column;align-items:stretch;}
+}
+
+/* ===== Focus Accessibility ===== */
+:focus-visible{outline:2px solid rgba(69,212,192,0.4);outline-offset:2px;}
+
+/* ===== Reduced Motion ===== */
+@media(prefers-reduced-motion:reduce){
+  .device-card,.button1,.button2{transition:none;animation:none;}
+}

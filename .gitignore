@@ -1,0 +1,7 @@
+node_modules/
+.env
+devices.json
+devices.db
+*.log
+server.log
+server_err.log
