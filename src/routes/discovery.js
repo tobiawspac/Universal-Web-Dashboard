@@ -1,15 +1,14 @@
 const express = require('express');
 const { dbAll, dbRun } = require('../db');
-const { requireAuth } = require('../auth');
 const { getLocalSubnets, runScan, getScanStatus } = require('../discovery/scan');
 
 const router = express.Router();
 
-router.get('/api/discovery/subnets', requireAuth, (req, res) => {
+router.get('/api/discovery/subnets', (req, res) => {
   res.json(getLocalSubnets());
 });
 
-router.post('/api/discovery/scan', requireAuth, async (req, res) => {
+router.post('/api/discovery/scan', async (req, res) => {
   const { cidr } = req.body || {};
   if (!cidr || !/^\d+\.\d+\.\d+\.\d+\/\d+$/.test(cidr)) {
     return res.status(400).json({ error: 'Valid CIDR required (e.g. 192.168.1.0/24)' });
@@ -26,7 +25,7 @@ router.post('/api/discovery/scan', requireAuth, async (req, res) => {
   }
 });
 
-router.get('/api/discovery/results', requireAuth, async (req, res) => {
+router.get('/api/discovery/results', async (req, res) => {
   const status = req.query.status || 'new';
   const rows = await dbAll(
     'SELECT * FROM discovered_devices WHERE status = ? ORDER BY last_seen DESC LIMIT 200',
@@ -35,7 +34,7 @@ router.get('/api/discovery/results', requireAuth, async (req, res) => {
   res.json(rows);
 });
 
-router.post('/api/discovery/adopt', requireAuth, async (req, res) => {
+router.post('/api/discovery/adopt', async (req, res) => {
   const { discoveredId, name, type, checkType, port } = req.body || {};
   if (!discoveredId || !name) return res.status(400).json({ error: 'discoveredId and name required' });
 
@@ -61,7 +60,7 @@ router.post('/api/discovery/adopt', requireAuth, async (req, res) => {
   res.status(201).json({ id: result.lastID, name, ip: disc.ip });
 });
 
-router.post('/api/discovery/ignore', requireAuth, async (req, res) => {
+router.post('/api/discovery/ignore', async (req, res) => {
   const { discoveredId } = req.body || {};
   if (!discoveredId) return res.status(400).json({ error: 'discoveredId required' });
   await dbRun('UPDATE discovered_devices SET status = ? WHERE id = ?', ['ignored', discoveredId]);

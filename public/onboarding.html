@@ -148,13 +148,7 @@
             currentStep = n;
         }
 
-        (async () => {
-            try {
-                const res = await fetch('/api/check-auth', { credentials: 'include' });
-                const data = await res.json();
-                if (data.authenticated) goStep(4);
-            } catch {}
-        })();
+        // Auth removed — always show onboarding from step 1
 
         document.getElementById('onboardSetPass').addEventListener('click', async () => {
             const pass = document.getElementById('onboardPassword').value;

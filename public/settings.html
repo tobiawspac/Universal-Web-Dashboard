@@ -88,17 +88,9 @@
     </main>
 
     <script>
-        (async () => {
-            try {
-                const res = await fetch('/api/check-auth', { credentials: 'include' });
-                const data = await res.json();
-                if (!data.authenticated) { location.href = 'login.html'; return; }
-            } catch { location.href = 'login.html'; return; }
-        })();
-
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
-            location.href = 'login.html';
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            document.cookie = 'dashboard_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            location.reload();
         });
 
         document.getElementById('changePasswordBtn').addEventListener('click', async () => {

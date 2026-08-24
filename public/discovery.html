@@ -93,7 +93,7 @@
     </main>
 
     <script>
-        document.getElementById('logoutBtn').addEventListener('click', () => { location.href = 'login.html'; });
+        document.getElementById('logoutBtn').addEventListener('click', () => { document.cookie = 'dashboard_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'; location.reload(); });
 
         (async () => {
             const res = await fetch('/api/discovery/subnets', { credentials: 'include' });

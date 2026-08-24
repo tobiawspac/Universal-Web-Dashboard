@@ -57,7 +57,7 @@
     </main>
 
     <script>
-        document.getElementById('logoutBtn').addEventListener('click', () => { location.href = 'login.html'; });
+        document.getElementById('logoutBtn').addEventListener('click', () => { document.cookie = 'dashboard_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'; location.reload(); });
 
         async function loadDeviceIcon(type) {
             const safeType = ['router', 'switch', 'server', 'camera', 'pc', 'printer'].includes(type) ? type : 'router';

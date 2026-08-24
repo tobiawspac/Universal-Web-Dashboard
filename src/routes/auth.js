@@ -1,7 +1,6 @@
 const express = require('express');
 const config = require('../config');
 const { verifyPassword, getHashedPassword, checkRateLimit, createSession, deleteSession, isValidSession, isTotpEnabled, getTotpSecret, setPassword, setTotpSecret, setTotpEnabled, getAllSessions } = require('../auth');
-const { requireAuth } = require('../auth');
 const { authenticator } = require('otplib');
 const QRCode = require('qrcode');
 
@@ -56,14 +55,14 @@ router.get('/api/check-auth', (req, res) => {
 });
 
 // --- Settings ---
-router.get('/api/settings/status', requireAuth, (req, res) => {
+router.get('/api/settings/status', (req, res) => {
   res.json({
     totpEnabled: isTotpEnabled(),
     sessionCount: getAllSessions().length,
   });
 });
 
-router.post('/api/settings/password', requireAuth, async (req, res) => {
+router.post('/api/settings/password', async (req, res) => {
   const { currentPassword, newPassword } = req.body || {};
   if (!currentPassword || !newPassword) {
     return res.status(400).json({ error: 'currentPassword and newPassword required' });
@@ -78,7 +77,7 @@ router.post('/api/settings/password', requireAuth, async (req, res) => {
   res.json({ ok: true, message: 'Password changed' });
 });
 
-router.post('/api/settings/2fa/setup', requireAuth, async (req, res) => {
+router.post('/api/settings/2fa/setup', async (req, res) => {
   const secret = authenticator.generateSecret();
   const otpauth = authenticator.keyuri('Universal Web Dashboard', 'dashboard', secret);
   try {
@@ -90,7 +89,7 @@ router.post('/api/settings/2fa/setup', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/api/settings/2fa/verify', requireAuth, async (req, res) => {
+router.post('/api/settings/2fa/verify', async (req, res) => {
   const { code } = req.body || {};
   const secret = getTotpSecret();
   if (!secret) return res.status(400).json({ error: 'Run /api/settings/2fa/setup first' });
@@ -100,7 +99,7 @@ router.post('/api/settings/2fa/verify', requireAuth, async (req, res) => {
   res.json({ ok: true, message: '2FA enabled' });
 });
 
-router.post('/api/settings/2fa/disable', requireAuth, async (req, res) => {
+router.post('/api/settings/2fa/disable', async (req, res) => {
   const { password } = req.body || {};
   if (!password || !verifyPassword(password, getHashedPassword())) {
     return res.status(401).json({ error: 'Password required to disable 2FA' });
@@ -110,7 +109,7 @@ router.post('/api/settings/2fa/disable', requireAuth, async (req, res) => {
   res.json({ ok: true, message: '2FA disabled' });
 });
 
-router.get('/api/settings/sessions', requireAuth, (req, res) => {
+router.get('/api/settings/sessions', (req, res) => {
   res.json(getAllSessions());
 });
 

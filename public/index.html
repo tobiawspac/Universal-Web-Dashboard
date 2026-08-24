@@ -56,9 +56,9 @@
             { name: 'Guest WiFi AP', ip: '192.168.1.5', type: 'router', live: { alive: true, latencyMs: 2 }, summary: { uptimePercent: 100, totalChecks: 1440 } },
         ];
 
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            try { await fetch('/api/logout', { method: 'POST', credentials: 'include' }); } catch {}
-            location.href = 'login.html';
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            document.cookie = 'dashboard_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            location.reload();
         });
 
         const KNOWN_TYPES = new Set(['router','switch','server','camera','pc','printer']);
@@ -71,19 +71,11 @@
             if (useDemo) return DEMO_DEVICES;
             try {
                 const res = await fetch('/api/dashboard-summary', { credentials: 'include' });
-                if (res.status === 401) { location.href = 'login.html'; return []; }
                 if (!res.ok) throw new Error('api error');
                 const data = await res.json();
-                document.getElementById('connectionBadge').textContent = 'Live';
-                document.getElementById('connectionBadge').style.borderColor = 'var(--accent)';
-                document.getElementById('connectionBadge').style.color = 'var(--accent)';
                 // if empty, show empty state, not demo (real install has no devices yet)
                 return Array.isArray(data) ? data : [];
             } catch (e) {
-                // offline preview fallback — show demo but badge = Demo
-                document.getElementById('connectionBadge').textContent = 'Demo';
-                document.getElementById('connectionBadge').style.borderColor = 'var(--line-strong)';
-                document.getElementById('connectionBadge').style.color = 'var(--ink-dim)';
                 return DEMO_DEVICES;
             }
         }

@@ -1,18 +1,17 @@
 const express = require('express');
 const { dbAll } = require('../db');
-const { requireAuth } = require('../auth');
 const { snmpProbe, snmpInterfaces } = require('../discovery/snmp');
 
 const router = express.Router();
 
-router.post('/api/snmp/probe', requireAuth, async (req, res) => {
+router.post('/api/snmp/probe', async (req, res) => {
   const { ip, community } = req.body || {};
   if (!ip) return res.status(400).json({ error: 'ip required' });
   const result = await snmpProbe(ip, community || 'public');
   res.json(result);
 });
 
-router.get('/api/snmp/:deviceId/interfaces', requireAuth, async (req, res) => {
+router.get('/api/snmp/:deviceId/interfaces', async (req, res) => {
   const deviceId = req.params.deviceId;
 
   // Get latest interfaces

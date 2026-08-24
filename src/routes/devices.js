@@ -1,12 +1,11 @@
 const express = require('express');
 const { isValidHost, isValidPort } = require('../utils/validators');
 const { loadDevices, saveDevices } = require('../utils/devices');
-const { requireAuth } = require('../auth');
 const { dbAll, dbRun } = require('../db');
 
 const router = express.Router();
 
-router.get('/devices', requireAuth, async (req, res) => {
+router.get('/devices', async (req, res) => {
   // Try SQLite first (has IDs), fallback to JSON
   try {
     const rows = await dbAll('SELECT * FROM devices ORDER BY id');
@@ -15,7 +14,7 @@ router.get('/devices', requireAuth, async (req, res) => {
   res.json(loadDevices());
 });
 
-router.post('/devices', requireAuth, async (req, res) => {
+router.post('/devices', async (req, res) => {
   const { name, ip, type, checkType, port, httpPath, https: useHttps, notes, _delete, snmp_enabled, snmp_community } = req.body || {};
 
   if (_delete) {

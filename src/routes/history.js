@@ -1,7 +1,5 @@
 const express = require('express');
 const { dbAll } = require('../db');
-const { requireAuth } = require('../auth');
-
 const router = express.Router();
 
 async function getSummaryForHost(host, hours = 24) {
@@ -30,7 +28,7 @@ async function getSummaryForHost(host, hours = 24) {
   }
 }
 
-router.get('/history/:host', requireAuth, async (req, res) => {
+router.get('/history/:host', async (req, res) => {
   const { host } = req.params;
   const rangeMinutes = parseInt(req.query.range || '60', 10) || 60;
   const since = Date.now() - rangeMinutes * 60 * 1000;
@@ -47,13 +45,13 @@ router.get('/history/:host', requireAuth, async (req, res) => {
   }
 });
 
-router.get('/summary/:host', requireAuth, async (req, res) => {
+router.get('/summary/:host', async (req, res) => {
   const hours = parseInt(req.query.hours || '24', 10) || 24;
   const summary = await getSummaryForHost(req.params.host, hours);
   res.json(summary);
 });
 
-router.get('/api/dashboard-summary', requireAuth, async (req, res) => {
+router.get('/api/dashboard-summary', async (req, res) => {
   const { dbAll } = require('../db');
   const { loadDevices } = require('../utils/devices');
   const { checkDevice } = require('../utils/checks');
