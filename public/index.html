@@ -29,44 +29,28 @@
         <p id="emptyState" class="empty-state" style="display:none;color:var(--ink-dim);padding:20px;">No devices yet. Add one to get started.</p>
     </main>
 
-    <script src="/socket.io/socket.io.js"></script>
     <script>
-        (async () => {
-            try {
-                const res = await fetch('/api/check-auth', { credentials: 'include' });
-                const data = await res.json();
-                if (!data.authenticated) { location.href = 'login.html'; return; }
-            } catch { location.href = 'login.html'; return; }
-        })();
+        const DEMO_DEVICES = [
+            { name: 'Main Router', ip: '192.168.1.1', type: 'router', live: { alive: true, latencyMs: 3 }, summary: { uptimePercent: 99.8, totalChecks: 1440 } },
+            { name: 'Office Switch', ip: '192.168.1.2', type: 'switch', live: { alive: true, latencyMs: 1 }, summary: { uptimePercent: 100, totalChecks: 1440 } },
+            { name: 'File Server', ip: '192.168.1.10', type: 'server', live: { alive: true, latencyMs: 12 }, summary: { uptimePercent: 99.5, totalChecks: 1440 } },
+            { name: 'NAS Storage', ip: '192.168.1.20', type: 'server', live: { alive: true, latencyMs: 8 }, summary: { uptimePercent: 98.9, totalChecks: 1440 } },
+            { name: 'IP Camera', ip: '192.168.1.50', type: 'camera', live: { alive: true, latencyMs: 22 }, summary: { uptimePercent: 97.2, totalChecks: 1440 } },
+            { name: 'Dev PC', ip: '192.168.1.100', type: 'pc', live: { alive: false, latencyMs: null }, summary: { uptimePercent: 85.3, totalChecks: 1440 } },
+            { name: 'Printer', ip: '192.168.1.200', type: 'printer', live: { alive: true, latencyMs: 45 }, summary: { uptimePercent: 99.1, totalChecks: 1440 } },
+            { name: 'Guest WiFi AP', ip: '192.168.1.5', type: 'router', live: { alive: true, latencyMs: 2 }, summary: { uptimePercent: 100, totalChecks: 1440 } },
+        ];
 
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
-            location.href = 'login.html';
-        });
+        document.getElementById('logoutBtn').addEventListener('click', () => { location.href = 'login.html'; });
 
         const TYPE_ICON = { router: '📶', switch: '🔀', server: '🖥️', camera: '📷', pc: '💻', printer: '🖨️' };
 
-        async function fetchSummary() {
-            const res = await fetch('/api/dashboard-summary', { credentials: 'include' });
-            if (!res.ok) return [];
-            return res.json();
-        }
-
-        async function deleteDevice(name, ip) {
-            const res = await fetch('/devices', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, ip, _delete: true }),
-                credentials: 'include'
-            });
-            return res.ok;
-        }
+        async function fetchSummary() { return DEMO_DEVICES; }
 
         function buildCard(device) {
             const card = document.createElement('div');
             const alive = device.live && device.live.alive;
             card.className = 'device-card' + (alive ? '' : ' offline');
-            card.setAttribute('data-ip', device.ip);
 
             card.innerHTML = `
                 <div class="device-card-top">
@@ -74,25 +58,18 @@
                     <span class="status-dot"></span>
                 </div>
                 <div class="device-card-name">${device.name}</div>
-                <div class="device-card-ip">${device.ip}${device.port ? ':' + device.port : ''}</div>
+                <div class="device-card-ip">${device.ip}</div>
                 <div class="device-card-meta">
                     <span>${alive ? (device.live.latencyMs != null ? device.live.latencyMs + ' ms' : 'ping ok') : 'offline'}</span>
                     <span>Uptime 24h: ${device.summary && device.summary.totalChecks ? device.summary.uptimePercent + '%' : '—'}</span>
                 </div>
                 <div class="device-card-actions">
                     <button class="button2 open-btn">Open</button>
-                    <button class="button2 danger delete-btn">Delete</button>
                 </div>
             `;
 
             card.querySelector('.device-card-name').onclick = card.querySelector('.open-btn').onclick = () => {
                 window.location.href = `device_page.html?name=${encodeURIComponent(device.name)}&ip=${encodeURIComponent(device.ip)}&type=${encodeURIComponent(device.type || 'router')}`;
-            };
-            card.querySelector('.delete-btn').onclick = async (e) => {
-                e.stopPropagation();
-                if (confirm(`Delete ${device.name}?`)) {
-                    if (await deleteDevice(device.name, device.ip)) render();
-                }
             };
 
             return card;
@@ -104,7 +81,7 @@
             const devices = await fetchSummary();
 
             container.innerHTML = '';
-            emptyState.style.display = devices.length ? 'none' : '';
+            emptyState.style.display = 'none';
 
             const onlineCount = devices.filter((d) => d.live && d.live.alive).length;
             document.getElementById('summaryOnline').innerHTML = `<span class="status-dot"></span>Online: ${onlineCount}`;
@@ -116,44 +93,11 @@
         document.getElementById('refreshBtn').addEventListener('click', render);
 
         render();
-        setInterval(render, 30000);
 
-        // WebSocket live updates
         const badge = document.getElementById('connectionBadge');
-        let socket;
-        try {
-            socket = io({ transports: ['polling', 'websocket'] });
-        } catch {}
-
-        if (socket) {
-            socket.on('connect', () => {
-                badge.textContent = 'Live';
-                badge.style.color = 'var(--accent)';
-                badge.style.borderColor = 'var(--accent)';
-            });
-            socket.on('disconnect', () => {
-                badge.textContent = 'Polling';
-                badge.style.color = 'var(--ink-dim)';
-                badge.style.borderColor = 'var(--line)';
-            });
-            socket.on('connect_error', () => {
-                badge.textContent = 'Polling';
-                badge.style.color = 'var(--ink-dim)';
-                badge.style.borderColor = 'var(--line)';
-            });
-
-            socket.on('device:update', (payload) => {
-                const card = document.querySelector(`[data-ip="${payload.ip}"]`);
-                if (!card) return;
-                card.classList.toggle('offline', !payload.alive);
-                const meta = card.querySelector('.device-card-meta span:first-child');
-                if (meta) {
-                    meta.textContent = payload.alive
-                        ? (payload.latencyMs != null ? payload.latencyMs + ' ms' : 'online')
-                        : 'offline';
-                }
-            });
-        }
+        badge.textContent = 'Demo';
+        badge.style.color = 'var(--accent)';
+        badge.style.borderColor = 'var(--accent)';
     </script>
 </body>
 </html>

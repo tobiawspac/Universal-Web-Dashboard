@@ -37,14 +37,7 @@
 </div>
 
 <script>
-    // Check if already logged in
-    (async () => {
-        try {
-            const res = await fetch('/api/check-auth', { credentials: 'include' });
-            const data = await res.json();
-            if (data.authenticated) { location.href = 'index.html'; return; }
-        } catch {}
-    })();
+    location.href = 'index.html';
 
     // Password login
     document.getElementById('loginForm').addEventListener('submit', async function (e) {
