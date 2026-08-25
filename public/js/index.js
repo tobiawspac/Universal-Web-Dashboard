@@ -108,7 +108,7 @@ function Render() {
 
         var f = Filtruj(devs)
         if (f.length == 0) {
-            box.innerHTML = '<p class="mono muted" style="padding:12px;border:1px dashed #3a3a3a;text-align:center">No match</p>'
+            box.innerHTML = '<p class="mono muted" style="padding:12px;border:1px dashed var(--line);text-align:center">No match</p>'
             return
         }
         for (var j = 0; j < f.length; j++) box.appendChild(Karticka(f[j]))
@@ -124,7 +124,7 @@ searchBox.addEventListener("input", function() {
     var f = Filtruj(devs)
 
     if (f.length == 0) {
-        box.innerHTML = '<p class="mono muted" style="padding:12px;border:1px dashed #3a3a3a;text-align:center">No match</p>'
+        box.innerHTML = '<p class="mono muted" style="padding:12px;border:1px dashed var(--line);text-align:center">No match</p>'
         return
     }
     for (var i = 0; i < f.length; i++) box.appendChild(Karticka(f[i]))

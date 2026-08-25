@@ -70,7 +70,7 @@ function Graf() {
                 ctx.strokeStyle = "rgba(255,255,255,0.1)"
                 ctx.beginPath()
                 ctx.moveTo(pL, yy); ctx.lineTo(W - pR, yy); ctx.stroke()
-                ctx.fillStyle = "#999"
+                ctx.fillStyle = "#A9A496"
                 ctx.font = "10px monospace"
                 ctx.textAlign = "right"
                 ctx.fillText(Math.round(lMax * (1 - g / 4)) + "ms", pL - 4, yy + 3)
@@ -84,17 +84,17 @@ function Graf() {
                 if (rows[k].alive) y2 = pT + (1 - (rows[k].latency_ms || 0) / lMax) * (H - pT - pB)
 
                 if (!rows[k].alive) {
-                    ctx.fillStyle = "#666"
+                    ctx.fillStyle = "#CBA135"
                     ctx.beginPath()
                     ctx.arc(x, H - pB - 4, 3, 0, Math.PI * 2)
                     ctx.fill()
                 } else if (y2 !== null) {
-                    ctx.fillStyle = "#ddd"
+                    ctx.fillStyle = "#7FEFBD"
                     ctx.beginPath()
                     ctx.arc(x, y2, 3, 0, Math.PI * 2)
                     ctx.fill()
                     if (lastX !== null) {
-                        ctx.strokeStyle = "#ddd"
+                        ctx.strokeStyle = "#7FEFBD"
                         ctx.lineWidth = 1.5
                         ctx.beginPath()
                         ctx.moveTo(lastX, lastY)

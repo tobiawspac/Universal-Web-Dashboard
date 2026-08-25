@@ -51,7 +51,7 @@ function Graf(devs) {
     }
 
     if (online.length == 0) {
-        ctx.fillStyle = "#999"
+        ctx.fillStyle = "#A9A496"
         ctx.font = "12px monospace"
         ctx.textAlign = "center"
         ctx.fillText("No latency data available", W / 2, H / 2)
@@ -71,7 +71,7 @@ function Graf(devs) {
         ctx.strokeStyle = "rgba(255,255,255,0.1)"
         ctx.beginPath()
         ctx.moveTo(pL, yy); ctx.lineTo(W - pR, yy); ctx.stroke()
-        ctx.fillStyle = "#999"
+        ctx.fillStyle = "#A9A496"
         ctx.font = "10px monospace"
         ctx.textAlign = "right"
         ctx.fillText(Math.round(lMax * g / 4) + "ms", pL - 5, yy + 3)
@@ -84,15 +84,15 @@ function Graf(devs) {
         var y = H - pB - vyska
 
         // pomalejsi = svetlejsi
-        if (dev.live.latencyMs > 100) ctx.fillStyle = "#777"
-        else ctx.fillStyle = "#ddd"
+        if (dev.live.latencyMs > 100) ctx.fillStyle = "#CBA135"
+        else ctx.fillStyle = "#7FEFBD"
         ctx.fillRect(x, y, sirka, vyska)
 
         // popisek pod sloupcem otoceny o 45°
         ctx.save()
         ctx.translate(x + sirka / 2, H - pB + 5)
         ctx.rotate(-Math.PI / 4)
-        ctx.fillStyle = "#999"
+        ctx.fillStyle = "#A9A496"
         ctx.font = "9px monospace"
         ctx.textAlign = "right"
         var lbl = dev.name || dev.ip
@@ -121,7 +121,7 @@ function PluginWidgety() {
             div.innerHTML = ""
             for (var k = 0; k < wplug.length; k++) {
                 var kont = document.createElement("div")
-                kont.style.border = "1px solid #3a3a3a"
+                kont.style.border = "1px solid var(--line)"
                 kont.style.marginBottom = "12px"
                 kont.style.minHeight = "80px"
                 div.appendChild(kont)

@@ -84,7 +84,7 @@ function NactiKanaly() {
             for (var i = 0; i < kanaly.length; i++) {
                 var k = kanaly[i]
                 var onoff = k.enabled ? "ON" : "OFF"
-                h += '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #3a3a3a;">'
+                h += '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);">'
                 h += '<span style="font-weight:bold;min-width:80px;" class="mono">' + k.type + "</span>"
                 h += "<span style='flex:1;'>" + k.name + "</span>"
                 h += '<span style="font-size:10px;" class="mono">' + onoff + "</span>"
@@ -137,11 +137,11 @@ function NactiLog() {
             for (var i = 0; i < radky.length; i++) {
                 var r = radky[i]
                 var cas = new Date(r.sent_at).toLocaleString("cs")
-                h += '<div style="padding:8px 0;border-bottom:1px solid #3a3a3a;display:flex;gap:10px;align-items:center;">'
+                h += '<div style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;">'
                 h += '<span style="font-weight:bold;min-width:80px;">' + r.event_type + "</span>"
                 h += "<span style='flex:1;'>" + (r.device_name || "?") + " — " + r.message + "</span>"
-                h += '<span style="font-size:10px;color:#999;">' + cas + "</span>"
-                if (r.suppressed) h += '<span style="font-size:10px;color:#999;">[suppressed]</span>'
+                h += '<span style="font-size:10px;color:var(--dim);">' + cas + "</span>"
+                if (r.suppressed) h += '<span style="font-size:10px;color:var(--dim);">[suppressed]</span>'
                 if (r.success === 0) h += '<span style="font-size:10px;">[failed]</span>'
                 h += "</div>"
             }
@@ -205,10 +205,10 @@ function NactiMaint() {
                 var od = new Date(r.starts_at).toLocaleString("cs")
                 var doo = new Date(r.ends_at).toLocaleString("cs")
                 var jmeno = r.device_name || "Device #" + r.device_id
-                h += '<div style="padding:8px 0;border-bottom:1px solid #3a3a3a;display:flex;gap:10px;align-items:center;">'
+                h += '<div style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;">'
                 h += "<span style='flex:1;'>" + jmeno + "</span>"
-                h += '<span style="font-size:10px;color:#999;">' + od + " — " + doo + "</span>"
-                if (r.note) h += '<span style="font-size:10px;color:#999;">(' + r.note + ")</span>"
+                h += '<span style="font-size:10px;color:var(--dim);">' + od + " — " + doo + "</span>"
+                if (r.note) h += '<span style="font-size:10px;color:var(--dim);">(' + r.note + ")</span>"
                 h += '<button class="button2 danger" onclick="deleteMaint(' + r.id + ')">Delete</button>'
                 h += "</div>"
             }

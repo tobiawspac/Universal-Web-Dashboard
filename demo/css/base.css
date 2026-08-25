@@ -1,56 +1,48 @@
-/* zakladni css */
+/* zakladni styly
+   paleta (zadani): 000000 black, F3EFE0 eggshell, 7FEFBD aquamarine, CBA135 golden bronze */
 
-*{ box-sizing:border-box }
-
-body{
-  background:#0d0d0d;
-   color:#e6e6e6;
-  font-family: Segoe UI, Arial;
-  margin:0px;
-  padding:0px;
+:root{
+  --ink:#F3EFE0;
+  --dim:#A9A496;    /* eggshell ztlumená na šedou */
+  --line:#2E2C26;   /* tmavý rámečkův tón */
+  --acc:#7FEFBD;
+  --bronze:#CBA135;
 }
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;color:var(--ink);font-family:'Segoe UI',Arial,sans-serif;line-height:1.5}
+a{color:var(--acc)}
+.mono{font-family:Consolas,ui-monospace,monospace}
+.muted{color:var(--dim)}
+main{max-width:1200px;margin:0 auto;padding:20px}
 
-/* odkazy aby nebyly modry */
-a{ color:white; }
-
-h1{ font-size:20px }
-h2{ font-size:16px }
-
-/* formulare */
 input[type=text], input[type=password], input[type=number], select {
 width:100%;
 padding:9px;
-background-color:#0a0a0a;
-border:solid 1px #3a3a3a;
-color:white;
+background-color:#0c0c0b;
+border:solid 1px var(--line);
+color:var(--ink);
 font-size:13px
 }
+input:focus{outline:none;border-color:var(--acc)}
 
-input:focus{ outline:none; border-color:#999999 }
-
-.field{ margin-bottom:10px; }
-
-.form-row{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end }
-
-.form-group{ flex:1; min-width:150px }
-.small{ flex:0 1 130px }
-
-.checkbox-label{ display:flex; align-items:center; gap:6px; font-size:11px; color:#999 }
-
-#addDeviceForm{ display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; margin-bottom:12px }
-#addDeviceForm > *{ flex:1 1 160px }
+.field{margin-bottom:10px;}
+.form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.form-group{flex:1;min-width:150px}
+.small{flex:0 1 130px}
+.checkbox-label{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dim)}
+#addDeviceForm{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+#addDeviceForm > *{flex:1 1 160px}
 
 label{
   display:block;
   font-size:10px;
   text-transform:uppercase;
-  color:#999;
+  color:var(--dim);
   margin-bottom:4px;
-  /* letter-spacing: 1px */
 }
 
-.status-message{ margin-top:8px; min-height:16px; font-size:12px; color:#999 }
-.error-message{ font-size:12px; color:#bfbfbf }
+.status-message{margin-top:8px;min-height:16px;font-size:12px;color:var(--dim)}
+.error-message{font-size:12px;color:var(--bronze)}
 
 header{
   display:flex;
@@ -59,29 +51,23 @@ header{
   flex-wrap:wrap;
   gap:12px;
   padding:12px 20px;
-  border-bottom:1px solid #3a3a3a;
+  border-bottom:1px solid var(--line);
 }
 
-.topnav{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
+.topnav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .topnav a{
   padding:6px 10px;
   font-size:12px;
-  border:1px solid #3a3a3a;
+  border:1px solid var(--line);
   text-decoration:none;
-  colour:#ccc;
-  color:#ccc;
+  color:var(--dim);
 }
-.topnav a:hover{ color:white; border-color:#999 }
-.active{ color:white !important; border-color:#999 !important }
+.topnav a:hover{color:var(--ink);border-color:var(--bronze)}
+.active{color:var(--ink) !important;border-color:var(--bronze) !important}
 
-.brand-name{ font-weight:bold; text-transform:uppercase }
-
-main{ max-width:1200px; margin:0 auto; padding:20px }
-
-.mono{ font-family: Consolas, monospace }
-.muted{ color:#999999 }
+.brand-name{font-weight:bold;text-transform:uppercase;letter-spacing:1px}
 
 @media(max-width:640px){
-  header{ flex-direction:column; align-items:flex-start }
-  main{ padding:14px }
+  header{flex-direction:column;align-items:flex-start}
+  main{padding:14px}
 }

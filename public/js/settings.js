@@ -127,7 +127,7 @@ function NactiSession() {
             }
             var h = ""
             for (var i = 0; i < sessiony.length; i++) {
-                h += '<div style="padding:6px 0;border-bottom:1px solid #3a3a3a;">Session: ' + sessiony[i].token + "...</div>"
+                h += '<div style="padding:6px 0;border-bottom:1px solid var(--line);">Session: ' + sessiony[i].token + "...</div>"
             }
             div.innerHTML = h
         })

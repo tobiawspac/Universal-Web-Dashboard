@@ -100,7 +100,7 @@ function Vykresli() {
         h += '<tr>'
         h += '<td><input type="checkbox" class="result-check" data-id="' + v.id + '"></td>'
         h += "<td>" + v.ip + "</td>"
-        h += '<td style="font-size:10px;color:#999;">' + (v.mac || "—") + "</td>"
+        h += '<td style="font-size:10px;color:var(--dim);">' + (v.mac || "—") + "</td>"
         h += "<td>" + (v.vendor_guess || "—") + "</td>"
         h += '<td><button class="button1" style="padding:4px 10px;font-size:10px;" onclick="openAdopt(\'' + v.ip + '\')">Adopt</button></td>'
         h += "</tr>"

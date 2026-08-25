@@ -51,9 +51,9 @@ function NactiPluginy() {
                 var p = pluginy[i]
                 var onoff = p.enabled ? "ON" : "OFF"
 
-                h += '<div style="padding:10px 0;border-bottom:1px solid #3a3a3a;display:flex;gap:12px;align-items:center;flex-wrap:wrap">'
+                h += '<div style="padding:10px 0;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:center;flex-wrap:wrap">'
                 h += '<span style="font-weight:bold;min-width:120px;">' + p.name + "</span>"
-                h += '<span style="font-size:10px;color:#999;">v' + p.version + "</span>"
+                h += '<span style="font-size:10px;color:var(--dim);">v' + p.version + "</span>"
                 h += '<span style="font-size:10px;" class="mono">[' + p.type.join(", ") + "]</span>"
                 h += '<span style="font-size:10px;" class="mono">' + onoff + "</span>"
 

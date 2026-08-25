@@ -11,8 +11,8 @@ var snmpComm = document.getElementById("snmpCommunity")
 
 function Vypis(txt, err) {
     st.textContent = txt
-    if (err) st.style.color = "#bfbfbf"
-    else st.style.color = "white"
+    if (err) st.style.color = "#CBA135"
+    else st.style.color = "#7FEFBD"
 }
 
 // nacte nastaveni checku z formulare
