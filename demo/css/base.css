@@ -1,0 +1,87 @@
+/* zakladni css */
+
+*{ box-sizing:border-box }
+
+body{
+  background:#0d0d0d;
+   color:#e6e6e6;
+  font-family: Segoe UI, Arial;
+  margin:0px;
+  padding:0px;
+}
+
+/* odkazy aby nebyly modry */
+a{ color:white; }
+
+h1{ font-size:20px }
+h2{ font-size:16px }
+
+/* formulare */
+input[type=text], input[type=password], input[type=number], select {
+width:100%;
+padding:9px;
+background-color:#0a0a0a;
+border:solid 1px #3a3a3a;
+color:white;
+font-size:13px
+}
+
+input:focus{ outline:none; border-color:#999999 }
+
+.field{ margin-bottom:10px; }
+
+.form-row{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end }
+
+.form-group{ flex:1; min-width:150px }
+.small{ flex:0 1 130px }
+
+.checkbox-label{ display:flex; align-items:center; gap:6px; font-size:11px; color:#999 }
+
+#addDeviceForm{ display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; margin-bottom:12px }
+#addDeviceForm > *{ flex:1 1 160px }
+
+label{
+  display:block;
+  font-size:10px;
+  text-transform:uppercase;
+  color:#999;
+  margin-bottom:4px;
+  /* letter-spacing: 1px */
+}
+
+.status-message{ margin-top:8px; min-height:16px; font-size:12px; color:#999 }
+.error-message{ font-size:12px; color:#bfbfbf }
+
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:12px;
+  padding:12px 20px;
+  border-bottom:1px solid #3a3a3a;
+}
+
+.topnav{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
+.topnav a{
+  padding:6px 10px;
+  font-size:12px;
+  border:1px solid #3a3a3a;
+  text-decoration:none;
+  colour:#ccc;
+  color:#ccc;
+}
+.topnav a:hover{ color:white; border-color:#999 }
+.active{ color:white !important; border-color:#999 !important }
+
+.brand-name{ font-weight:bold; text-transform:uppercase }
+
+main{ max-width:1200px; margin:0 auto; padding:20px }
+
+.mono{ font-family: Consolas, monospace }
+.muted{ color:#999999 }
+
+@media(max-width:640px){
+  header{ flex-direction:column; align-items:flex-start }
+  main{ padding:14px }
+}

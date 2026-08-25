@@ -1,252 +1,11 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="dark">
-    <title>Device — BEACON · Demo</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <header>
-        <div class="brand">
-            <div class="brand-mark">◉</div>
-            <div class="brand-text">
-                <div class="brand-name">BEACON</div>
-                <div class="brand-sub">Device Detail</div>
-            </div>
-        </div>
-        <nav class="topnav">
-            <a href="index.html">Dashboard</a>
-            <a href="terminal.html">Terminal</a>
-            <a href="discovery.html">Discovery</a>
-            <a href="alerts.html">Alerts</a>
-            <a href="plugins.html">Plugins</a>
-            <a href="widgets.html">Widgets</a>
-            <a href="settings.html">Settings</a>
-            <span class="badge-demo" style="border-color:var(--accent);color:var(--accent)">Demo · no login</span>
-        </nav>
-    </header>
-    <main>
-        <div class="card">
-            <div id="deviceDetails" class="device-details-card">
-                <div id="deviceIcon" class="device-icon"></div>
-                <p id="deviceName" class="mono" style="color:var(--accent);font-weight:700;font-size:13px"></p>
-                <p id="deviceIP" class="mono" style="color:var(--ink-dim);font-size:11px;margin-top:4px"></p>
-                <p id="deviceType" class="mono" style="color:var(--ink-dim);font-size:11px"></p>
-                <div id="deviceActions" style="display:flex;gap:12px;margin-top:14px">
-                    <button class="button1" id="pingBtn">Ping</button>
-                    <button class="button2" id="backButton">Back</button>
-                </div>
-            </div>
-        </div>
-        <div class="card" id="statsCard" style="display:none">
-            <div class="section-title">Summary (24h)</div>
-            <p id="statUptime" class="mono" style="color:var(--ink-dim);font-size:12px"></p>
-            <p id="statLatency" class="mono" style="color:var(--ink-dim);font-size:12px"></p>
-            <p id="statStatus" class="mono" style="color:var(--ink-dim);font-size:12px"></p>
-        </div>
-        <div class="card" id="historyCard" style="display:none">
-            <div class="section-title">Ping History (1h)</div>
-            <canvas id="historyChart" width="380" height="160"></canvas>
-        </div>
-        <div class="card" id="snmpCard" style="display:none">
-            <div class="section-title">Network Interfaces (SNMP)</div>
-            <div id="snmpInterfaces" style="overflow-x:auto;"></div>
-        </div>
-    </main>
-
-    <script>
-        
-
-        async function loadDeviceIcon(type) {
-            const safeType = ['router', 'switch', 'server', 'camera', 'pc', 'printer'].includes(type) ? type : 'router';
-            const url = `assets/${safeType}.svg`;
-            const iconContainer = document.getElementById('deviceIcon');
-
-            try {
-                const response = await fetch(url);
-                const svgText = await response.text();
-                iconContainer.innerHTML = svgText;
-            } catch (error) {
-                iconContainer.innerHTML = '<svg viewBox="0 0 64 64" width="80" height="80"><rect x="8" y="8" width="48" height="48" rx="10" fill="var(--line)"/><path d="M20 22h24v20H20zm4 24h16v6H24zm-4 0h-4v6h4zm28-24h4v6h-4zm0 10h4v6h-4z" fill="var(--ink-dim)"/></svg>';
-            }
-        }
-
-        async function loadSummary(ip) {
-            try {
-                const res = await fetch(`/summary/${encodeURIComponent(ip)}?hours=24`, { credentials: 'include' });
-                if (!res.ok) return;
-                const data = await res.json();
-                if (!data.totalChecks || data.totalChecks === 0) return;
-
-                document.getElementById('statsCard').style.display = '';
-                document.getElementById('statUptime').textContent = `Uptime: ${data.uptimePercent}%`;
-                document.getElementById('statLatency').textContent = `Avg Latency: ${data.avgLatencyMs !== null ? data.avgLatencyMs + 'ms' : 'N/A'}`;
-                document.getElementById('statStatus').textContent = `Last Status: ${data.lastStatus}`;
-                document.getElementById('statStatus').style.color = data.lastStatus === 'online' ? 'var(--accent)' : 'var(--danger)';
-            } catch {}
-        }
-
-        async function loadHistory(ip) {
-            try {
-                const res = await fetch(`/history/${encodeURIComponent(ip)}?range=60`, { credentials: 'include' });
-                if (!res.ok) return;
-                const rows = await res.json();
-                if (!rows.length) return;
-
-                document.getElementById('historyCard').style.display = '';
-                const canvas = document.getElementById('historyChart');
-                const ctx = canvas.getContext('2d');
-                const W = canvas.width, H = canvas.height;
-                const pad = { top: 10, bottom: 20, left: 40, right: 10 };
-
-                ctx.clearRect(0, 0, W, H);
-
-                const times = rows.map(r => r.timestamp);
-                const latencies = rows.map(r => r.alive ? (r.latency_ms || 0) : null);
-                const minT = Math.min(...times), maxT = Math.max(...times);
-                const rangeT = maxT - minT || 1;
-                const maxLat = Math.max(...latencies.filter(v => v !== null), 1);
-
-                ctx.strokeStyle = 'rgba(12,98,145,0.35)';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(pad.left, H - pad.bottom);
-                ctx.lineTo(pad.left, pad.top);
-                ctx.stroke();
-
-                ctx.strokeStyle = 'rgba(126,25,70,0.35)';
-                ctx.lineWidth = 0.5;
-                for (let i = 0; i <= 4; i++) {
-                    const y = pad.top + (H - pad.top - pad.bottom) * (i / 4);
-                    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
-                }
-
-                ctx.fillStyle = '#c7b8c7';
-                ctx.font = '10px JetBrains Mono, monospace';
-                ctx.textAlign = 'right';
-                for (let i = 0; i <= 4; i++) {
-                    const y = pad.top + (H - pad.top - pad.bottom) * (i / 4);
-                    const val = Math.round(maxLat * (1 - i / 4));
-                    ctx.fillText(val + 'ms', pad.left - 4, y + 3);
-                }
-
-                let lastX = null, lastY = null;
-                for (let i = 0; i < rows.length; i++) {
-                    const x = pad.left + ((times[i] - minT) / rangeT) * (W - pad.left - pad.right);
-                    const y = latencies[i] !== null
-                        ? pad.top + (1 - latencies[i] / maxLat) * (H - pad.top - pad.bottom)
-                        : null;
-
-                    if (!rows[i].alive) {
-                        ctx.fillStyle = '#A63446';
-                        ctx.beginPath(); ctx.arc(x, H - pad.bottom - 4, 3, 0, Math.PI * 2); ctx.fill();
-                    } else if (y !== null) {
-                        ctx.fillStyle = '#0C6291';
-                        ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
-                        if (lastX !== null && lastY !== null) {
-                            ctx.strokeStyle = '#0C6291';
-                            ctx.lineWidth = 1.5;
-                            ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke();
-                        }
-                        lastX = x; lastY = y;
-                    }
-                }
-            } catch {}
-        }
-
-        async function loadSnmpInterfaces(ip) {
-            try {
-                const devRes = await fetch('/devices', { credentials: 'include' });
-                const devices = await devRes.json();
-                const device = devices.find((d) => d.ip === ip);
-                if (!device || !device.snmp_enabled || !device.id) return;
-
-                const res = await fetch(`/api/snmp/${device.id}/interfaces`, { credentials: 'include' });
-                if (!res.ok) return;
-                const data = await res.json();
-                if (!data.interfaces || !data.interfaces.length) return;
-
-                document.getElementById('snmpCard').style.display = '';
-                const table = document.getElementById('snmpInterfaces');
-                table.innerHTML = `
-                    <table class="data-table">
-                        <tr>
-                            <th>Interface</th>
-                            <th>Status</th>
-                            <th style="text-align:right">In bps</th>
-                            <th style="text-align:right">Out bps</th>
-                        </tr>
-                        ${data.interfaces.map((iface) => `
-                            <tr>
-                                <td>${iface.if_descr || iface.if_index}</td>
-                                <td style="color:${iface.if_oper_status === 1 ? 'var(--accent)' : 'var(--danger)'};">${iface.if_oper_status === 1 ? 'Up' : 'Down'}</td>
-                                <td style="text-align:right;">${iface.in_bps != null ? formatBps(iface.in_bps) : '—'}</td>
-                                <td style="text-align:right;">${iface.out_bps != null ? formatBps(iface.out_bps) : '—'}</td>
-                            </tr>
-                        `).join('')}
-                    </table>
-                `;
-            } catch {}
-        }
-
-        function formatBps(bps) {
-            if (bps >= 1000000000) return (bps / 1000000000).toFixed(1) + ' Gbps';
-            if (bps >= 1000000) return (bps / 1000000).toFixed(1) + ' Mbps';
-            if (bps >= 1000) return (bps / 1000).toFixed(1) + ' Kbps';
-            return bps + ' bps';
-        }
-
-        async function displayDeviceDetails() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const deviceName = urlParams.get('name');
-            const deviceIP = urlParams.get('ip');
-            const deviceType = urlParams.get('type') || 'router';
-
-            if (!deviceName || !deviceIP) {
-                document.getElementById('deviceDetails').innerHTML = '<p class="error-message">Invalid device details.</p>';
-                return;
-            }
-
-            document.getElementById('deviceName').textContent = `Device: ${deviceName}`;
-            document.getElementById('deviceIP').textContent = `IP: ${deviceIP}`;
-            document.getElementById('deviceType').textContent = `Type: ${deviceType}`;
-            await loadDeviceIcon(deviceType);
-            await loadSummary(deviceIP);
-            await loadHistory(deviceIP);
-            await loadSnmpInterfaces(deviceIP);
-
-            document.getElementById('pingBtn').addEventListener('click', async function () {
-                this.disabled = true;
-                this.textContent = 'Pinging…';
-                try {
-                    const res = await fetch('/ping', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ host: deviceIP, timeout: 5000 }),
-                        credentials: 'include'
-                    });
-                    const result = await res.json();
-                    alert(result.alive ? `${deviceName} is online (${result.latencyMs || '?'}ms)` : `${deviceName} is offline`);
-                } catch { alert('Server error.'); }
-                finally { this.disabled = false; this.textContent = 'Ping'; }
-            });
-        }
-
-        document.getElementById('backButton').addEventListener('click', () => {
-            window.location.href = 'index.html';
-        });
-
-        displayDeviceDetails();
-    </script>
-
 <script>
-// DEMO MODE — GitHub Pages, no backend, no password
+// DEMO MODE - static hosting, zadny backend
 window.__DEMO__ = true;
-// mock fetch for /api/* /devices /ping /health etc — returns demo data
 (function(){
-  const DEMO_DEVICES_MOCK = [
+  var MOCK_DEVICES = [
     { name: 'Main Router', ip: '192.168.1.1', type: 'router', live: { alive: true, latencyMs: 3 }, summary: { uptimePercent: 99.8, totalChecks: 1440 } },
     { name: 'Office Switch', ip: '192.168.1.2', type: 'switch', live: { alive: true, latencyMs: 1 }, summary: { uptimePercent: 100, totalChecks: 1440 } },
     { name: 'File Server', ip: '192.168.1.10', type: 'server', live: { alive: true, latencyMs: 12 }, summary: { uptimePercent: 99.5, totalChecks: 1440 } },
@@ -254,37 +13,87 @@ window.__DEMO__ = true;
     { name: 'IP Camera', ip: '192.168.1.50', type: 'camera', live: { alive: true, latencyMs: 22 }, summary: { uptimePercent: 97.2, totalChecks: 1440 } },
     { name: 'Dev PC', ip: '192.168.1.100', type: 'pc', live: { alive: false, latencyMs: null }, summary: { uptimePercent: 85.3, totalChecks: 1440 } },
     { name: 'Printer', ip: '192.168.1.200', type: 'printer', live: { alive: true, latencyMs: 45 }, summary: { uptimePercent: 99.1, totalChecks: 1440 } },
-    { name: 'Guest WiFi AP', ip: '192.168.1.5', type: 'router', live: { alive: true, latencyMs: 2 }, summary: { uptimePercent: 100, totalChecks: 1440 } },
+    { name: 'Guest WiFi AP', ip: '192.168.1.5', type: 'router', live: { alive: true, latencyMs: 2 }, summary: { uptimePercent: 100, totalChecks: 1440 } }
   ];
-  const origFetch = window.fetch.bind(window);
-  window.fetch = async (url, opts) => {
-    const u = String(url);
-    // health
-    if (u.includes('/health')) return new Response(JSON.stringify({ ok: true, service: 'beacon-demo' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    // dashboard summary
-    if (u.includes('/api/dashboard-summary')) return new Response(JSON.stringify(DEMO_DEVICES_MOCK), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    // devices
-    if (u.includes('/devices')) return new Response(JSON.stringify(DEMO_DEVICES_MOCK.map(d=>({id: Math.random(), name:d.name, ip:d.ip, type:d.type}))), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    // history / summary
-    if (u.includes('/history/') || u.includes('/summary/')) {
-      if (u.includes('/summary/')) return new Response(JSON.stringify({ uptimePercent: 99.2, avgLatencyMs: 8, lastStatus: 'online', totalChecks: 1440 }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      const rows = Array.from({length: 60}, (_,i)=>({ host: '192.168.1.1', timestamp: Date.now()-i*60000, alive: Math.random()>0.1?1:0, latency_ms: Math.floor(2+Math.random()*20) }));
-      return new Response(JSON.stringify(rows), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  var realFetch = window.fetch ? window.fetch.bind(window) : null;
+  function J(txt){ return new Response(JSON.stringify(txt), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
+  window.fetch = function(url, opts){
+    var u = String(url);
+    if (u.indexOf('/api/dashboard-summary') >= 0) return Promise.resolve(J(MOCK_DEVICES));
+    if (u.indexOf('/devices') >= 0) {
+      return Promise.resolve(J(MOCK_DEVICES.map(function(d,i){ return { id: i+1, name: d.name, ip: d.ip, type: d.type, snmp_enabled: 0 }; })));
     }
-    // ping / check
-    if (u.includes('/ping') || u.includes('/check')) return new Response(JSON.stringify({ host: '127.0.0.1', alive: true, latencyMs: 12 }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    // auth
-    if (u.includes('/api/check-auth')) return new Response(JSON.stringify({ authenticated: true, totpEnabled: false }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    if (u.includes('/api/login') || u.includes('/api/logout') || u.includes('/api/settings') || u.includes('/api/alerts') || u.includes('/api/discovery') || u.includes('/api/snmp') || u.includes('/api/plugins')) {
-      return new Response(JSON.stringify({ ok: true, authenticated: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    if (u.indexOf('/summary/') >= 0) return Promise.resolve(J({ uptimePercent: 99.2, avgLatencyMs: 8, lastStatus: 'online', totalChecks: 1440 }));
+    if (u.indexOf('/history/') >= 0) {
+      var rows = [];
+      for (var i=0;i<60;i++) rows.push({ timestamp: Date.now()-i*60000, alive: Math.random()>0.08?1:0, latency_ms: Math.floor(2+Math.random()*20) });
+      return Promise.resolve(J(rows));
     }
-    // fallback: try real fetch, but if fails return mock empty
-    try { return await origFetch(url, opts); } catch { return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
+    if (u.indexOf('/ping') >= 0 || u.indexOf('/check') >= 0) return Promise.resolve(J({ host: '127.0.0.1', alive: true, latencyMs: 12 }));
+    if (u.indexOf('/health') >= 0) return Promise.resolve(J({ ok: true }));
+    // vsechno ostatni api -> ok/prázdný seznam
+    var empty = [ '/api/alerts', '/api/discovery', '/api/plugins', '/api/snmp', '/api/settings' ];
+    for (var k=0;k<empty.length;k++) {
+      if (u.indexOf(empty[k]) >= 0) return Promise.resolve(J([]));
+    }
+    if (realFetch) return realFetch(u, opts);
+    return Promise.resolve(J([]));
   };
-  // also mock socket.io if not loaded
-  if (typeof io === 'undefined') window.io = function(){ return { on: ()=>{}, emit: ()=>{} }; };
+  // socket.io na static hostingu neni -> no-op
+  window.io = function(){ return { on: function(){}, emit: function(){} }; };
 })();
 </script>
 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>Device — BEACON · Demo</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+<header>
+    <span class="brand-name">BEACON</span>
+    <nav class="topnav">
+        <a href="index.html">Dashboard</a>
+        <a href="terminal.html">Terminal</a>
+        <a href="discovery.html">Discovery</a>
+        <a href="alerts.html">Alerts</a>
+        <a href="plugins.html">Plugins</a>
+        <a href="widgets.html">Widgets</a>
+        <a href="settings.html">Settings</a>
+        <a href="login.html" class="button2 danger" style="text-decoration:none">Exit Demo</a>
+    </nav>
+</header>
+<main>
+    <div class="card">
+        <div id="deviceDetails">
+            <p id="deviceName" class="mono" style="font-weight:bold;font-size:13px"></p>
+            <p id="deviceIP" class="mono" style="color:var(--ink-dim);font-size:11px;margin-top:4px"></p>
+            <p id="deviceType" class="mono" style="color:var(--ink-dim);font-size:11px"></p>
+            <div id="deviceActions" style="display:flex;gap:12px;margin-top:14px">
+                <button class="button1" id="pingBtn">Ping</button>
+                <button class="button2" id="backButton">Back</button>
+            </div>
+        </div>
+    </div>
+    <div class="card" id="statsCard" style="display:none">
+        <div class="section-title">Summary (24h)</div>
+        <p id="statUptime" class="mono" style="color:var(--ink-dim);font-size:12px"></p>
+        <p id="statLatency" class="mono" style="color:var(--ink-dim);font-size:12px"></p>
+        <p id="statStatus" class="mono" style="color:var(--ink-dim);font-size:12px"></p>
+    </div>
+    <div class="card" id="historyCard" style="display:none">
+        <div class="section-title">Ping History (1h)</div>
+        <canvas id="historyChart" width="380" height="160"></canvas>
+    </div>
+    <div class="card" id="snmpCard" style="display:none">
+        <div class="section-title">Network Interfaces (SNMP)</div>
+        <div id="snmpInterfaces" style="overflow-x:auto;"></div>
+    </div>
+</main>
+
+<script src="js/site.js"></script>
+<script src="js/device_page.js"></script>
 </body>
 </html>

@@ -1,0 +1,128 @@
+/* karty tlacitka atd */
+
+.card{
+  background-color:#151515;
+  border:1px solid #3a3a3a;
+  padding:18px;
+  margin-bottom:14px;
+}
+/* karticka se uz nepouziva
+.karticka{ background:#111; padding:10px }
+*/
+
+.section-title{ font-size:11px; text-transform:uppercase; margin-bottom:10px }
+
+.empty-state{
+  color:#999;
+  padding:18px;
+  text-align:center;
+  border:1px dashed #3a3a3a;
+}
+
+.dashboard-toolbar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px }
+.summary-pill{ padding:7px 10px; font-size:11px; border:1px solid #3a3a3a }
+
+/* hlavni tlacitko */
+.btn, .button1{
+  background:#fff;
+  color:#111;
+  border:1px solid white;
+  font-weight:bold;
+  font-size:12px;
+  cursor:pointer;
+  padding:10px;
+  width:100%;
+}
+.button1{ width:auto; padding:7px 14px }
+.button1:hover{ background:#dddddd }
+
+/* vedlejsi tlacitko */
+.button2{
+  background:#1f1f1f;
+  color:#999999;
+  border:1px solid #3a3a3a;
+  cursor:pointer;
+  font-size:12px;
+  padding:7px 14px;
+}
+.button2:hover{ color:white }
+.danger{ color:#bfbfbf !important }
+
+.device-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px }
+.device-card{ background:#151515; border:1px solid #3a3a3a; padding:14px; cursor:pointer }
+.device-card.offline{ opacity:0.55; }
+.device-card-top{ display:flex; justify-content:space-between; margin-bottom:6px }
+.status-dot{ display:inline-block; width:7px; height:7px; background:white }
+.offline .status-dot{ background:#3c3c3c }
+.device-card-name{ font-weight:bold }
+.device-card-ip{ font-size:11px; color:#999 }
+.device-card-meta{
+  display:flex;
+  justify-content:space-between;
+  font-size:11px;
+  color:#999;
+  margin-top:8px;
+  padding-top:6px;
+  border-top:solid 1px #3a3a3a;
+}
+.device-card-actions{ display:flex; gap:8px; margin-top:10px }
+
+.widget-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; margin-bottom:16px }
+.widget-stat{ text-align:center }
+.widget-stat-value{ font-size:28px; font-weight:bold }
+.widget-stat-label{ font-size:11px; color:#999; margin-top:2px }
+
+.data-table{ width:100%; border-collapse:collapse; font-size:12px }
+.data-table th{ text-align:left; padding:5px; border-bottom:1px solid #3a3a3a; font-size:10px; text-transform:uppercase }
+.data-table td{ padding:5px; border-bottom:1px solid #3a3a3a }
+
+/* terminal */
+#terminal{
+  background:#0a0a0a;
+  border:1px solid #3a3a3a;
+  padding:12px;
+  height:400px;
+  overflow-y:auto;
+  white-space:pre-wrap;
+  font-family:Consolas, monospace;
+  font-size:12px;
+}
+#commandInput{ margin-top:8px }
+.prompt{ color:#e6e6e6 }
+.output-success{ color:white }
+.output-error{ color:#888; font-style:italic }
+
+.dialog-overlay{
+  display:none;
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.75);
+  z-index:100;
+  justify-content:center;
+  align-items:center;
+  padding:16px;
+}
+.dialog-overlay.open{ display:flex }
+.dialog{ background:#151515; border:1px solid #3a3a3a; padding:18px; width:380px; max-width:100% }
+
+.progress-track{ height:6px; background:#242424; width:100% }
+.progress-fill{ height:100%; background:#999 }
+
+/* login stranka */
+.scene{ min-height:100vh; display:grid; place-items:center; padding:20px }
+.login-shell{ width:360px; max-width:92vw }
+.login-title{ text-align:center; font-size:18px; font-weight:bold; text-transform:uppercase }
+.login-card{ background:#151515; border:1px solid #3a3a3a; padding:22px; margin-top:14px }
+.login-meta{ margin-top:8px; text-align:center; font-size:10px; color:#999 }
+.login-help{ margin-top:10px; text-align:center; font-size:11px; color:#999 }
+
+.step-dots{ display:flex; gap:8px; justify-content:center; margin:20px 0 }
+.step-dot{ width:8px; height:8px; background:#3a3a3a }
+.step-dot.active{ background:#999 }
+.onboard-step{ display:none }
+.onboard-step.active{ display:block }
+.onboard-nav{ display:flex; justify-content:space-between; margin-top:24px }
+.feature-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:18px 0 }
+.feature-card{ padding:14px; border:1px solid #3a3a3a }
+.feature-card h4{ font-size:11px; text-transform:uppercase; margin-bottom:6px }
+.feature-card p{ color:#999; font-size:11px; line-height:1.5 }

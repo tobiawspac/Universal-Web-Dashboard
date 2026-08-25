@@ -4,183 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
-    <title>BEACON — Field Monitor</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Dashboard - BEACON</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
 </head>
 <body>
 
-    <header>
-        <div class="brand">
-            <div class="brand-mark">◉</div>
-            <div class="brand-text">
-                <div class="brand-name">BEACON</div>
-                <div class="brand-sub">Field Network Monitor · v1.1</div>
-            </div>
+<header>
+    <span class="brand-name">BEACON</span>
+    <nav class="topnav">
+        <a href="index.html">Dashboard</a>
+        <a href="terminal.html">Terminal</a>
+        <a href="discovery.html">Discovery</a>
+        <a href="alerts.html">Alerts</a>
+        <a href="plugins.html">Plugins</a>
+        <a href="widgets.html">Widgets</a>
+        <a href="settings.html">Settings</a>
+        <button class="button2 danger" id="logoutBtn">Logout</button>
+    </nav>
+</header>
+<main>
+    <div class="dashboard-toolbar">
+        <div class="summary-pill" id="summaryOnline"><span class="status-dot"></span>Online: —</div>
+        <div class="summary-pill" id="summaryOffline">Offline: —</div>
+        <div style="flex:1;min-width:160px;max-width:320px">
+            <input type="text" id="q" placeholder="Search name / IP…" style="margin:0;padding:8px 10px;font-size:11px">
         </div>
-        <nav class="topnav">
-            <a href="index.html">Dashboard</a>
-            <a href="terminal.html">Terminal</a>
-            <a href="discovery.html">Discovery</a>
-            <a href="alerts.html">Alerts</a>
-            <a href="plugins.html">Plugins</a>
-            <a href="widgets.html">Widgets</a>
-            <a href="settings.html">Settings</a>
-            <button class="button2 danger" id="logoutBtn">Logout</button>
-        </nav>
-    </header>
-    <main>
-        <div class="dashboard-toolbar">
-            <div class="summary-pill" id="summaryOnline"><span class="status-dot"></span>Online: —</div>
-            <div class="summary-pill" id="summaryOffline">Offline: —</div>
-            <div style="flex:1;min-width:160px;max-width:320px">
-                <input type="text" id="q" placeholder="Search name / IP…" style="margin:0;padding:8px 10px;font-size:11px">
-            </div>
-            <button class="button1" onclick="location.href='add_device.html'">+ Add device</button>
-            <button class="button2" id="refreshBtn">Refresh</button>
-            <button class="button2" id="exportBtn" title="Export devices JSON">Export</button>
-        </div>
-        <div id="devices" class="device-grid"></div>
-        <p id="emptyState" class="empty-state" style="display:none">No devices yet. Add one to get started or <a href="add_device.html" style="color:var(--accent)">add device</a> · <a href="#" id="demoLink" style="color:var(--accent)">show demo</a></p>
-        <p class="muted mono" style="margin-top:16px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;opacity:.7">BEACON · 000004 · FBFEF9 · 0C6291 · A63446 · 7E1946 · SVG only · no emoji</p>
-    </main>
+        <button class="button1" onclick="location.href='add_device.html'">+ Add device</button>
+        <button class="button2" id="refreshBtn">Refresh</button>
+        <button class="button2" id="exportBtn" title="Export devices JSON">Export</button>
+    </div>
+    <div id="devices" class="device-grid"></div>
+    <p id="emptyState" class="empty-state" style="display:none">No devices yet. Add one to get started or <a href="add_device.html">add device</a> · <a href="#" id="demoLink">show demo</a></p>
+</main>
 
-    <script>
-        const DEMO_DEVICES = [
-            { name: 'Main Router', ip: '192.168.1.1', type: 'router', live: { alive: true, latencyMs: 3 }, summary: { uptimePercent: 99.8, totalChecks: 1440 } },
-            { name: 'Office Switch', ip: '192.168.1.2', type: 'switch', live: { alive: true, latencyMs: 1 }, summary: { uptimePercent: 100, totalChecks: 1440 } },
-            { name: 'File Server', ip: '192.168.1.10', type: 'server', live: { alive: true, latencyMs: 12 }, summary: { uptimePercent: 99.5, totalChecks: 1440 } },
-            { name: 'NAS Storage', ip: '192.168.1.20', type: 'server', live: { alive: true, latencyMs: 8 }, summary: { uptimePercent: 98.9, totalChecks: 1440 } },
-            { name: 'IP Camera', ip: '192.168.1.50', type: 'camera', live: { alive: true, latencyMs: 22 }, summary: { uptimePercent: 97.2, totalChecks: 1440 } },
-            { name: 'Dev PC', ip: '192.168.1.100', type: 'pc', live: { alive: false, latencyMs: null }, summary: { uptimePercent: 85.3, totalChecks: 1440 } },
-            { name: 'Printer', ip: '192.168.1.200', type: 'printer', live: { alive: true, latencyMs: 45 }, summary: { uptimePercent: 99.1, totalChecks: 1440 } },
-            { name: 'Guest WiFi AP', ip: '192.168.1.5', type: 'router', live: { alive: true, latencyMs: 2 }, summary: { uptimePercent: 100, totalChecks: 1440 } },
-        ];
-
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            document.cookie = 'dashboard_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            location.reload();
-        });
-
-        const KNOWN_TYPES = new Set(['router','switch','server','camera','pc','printer']);
-        function safeType(t){ return KNOWN_TYPES.has(t) ? t : 'router'; }
-
-        let useDemo = false;
-        let lastDevices = [];
-
-        async function fetchSummary() {
-            if (useDemo) return DEMO_DEVICES;
-            try {
-                const res = await fetch('/api/dashboard-summary', { credentials: 'include' });
-                if (!res.ok) throw new Error('api error');
-                const data = await res.json();
-                // if empty, show empty state, not demo (real install has no devices yet)
-                return Array.isArray(data) ? data : [];
-            } catch (e) {
-                return DEMO_DEVICES;
-            }
-        }
-
-        function buildCard(device) {
-            const card = document.createElement('div');
-            const alive = device.live && device.live.alive;
-            card.className = 'device-card' + (alive ? '' : ' offline');
-            const st = safeType(device.type);
-
-            card.innerHTML = `
-                <div class="device-card-top">
-                    <span class="device-card-icon"><img src="assets/${st}.svg" alt="${st}" width="26" height="26" class="device-card-icon-svg" loading="lazy"></span>
-                    <span class="status-dot" title="${alive ? 'online' : 'offline'}"></span>
-                </div>
-                <div class="device-card-name">${device.name}</div>
-                <div class="device-card-ip">${device.ip} · ${st}</div>
-                <div class="device-card-meta">
-                    <span>${alive ? (device.live.latencyMs != null ? device.live.latencyMs + ' ms' : 'ping ok') : 'offline'}</span>
-                    <span>Uptime 24h: ${device.summary && device.summary.totalChecks ? device.summary.uptimePercent + '%' : '—'}</span>
-                </div>
-                <div class="device-card-actions">
-                    <button class="button2 open-btn" style="flex:1">Open</button>
-                </div>
-            `;
-
-            const go = () => {
-                window.location.href = `device_page.html?name=${encodeURIComponent(device.name)}&ip=${encodeURIComponent(device.ip)}&type=${encodeURIComponent(device.type || 'router')}`;
-            };
-            card.querySelector('.device-card-name').onclick = go;
-            card.querySelector('.open-btn').onclick = go;
-            card.addEventListener('click', (e) => {
-                if (e.target.closest('button')) return;
-                go();
-            });
-            return card;
-        }
-
-        function applyFilter(devices) {
-            const q = document.getElementById('q').value.trim().toLowerCase();
-            if (!q) return devices;
-            return devices.filter(d => (d.name||'').toLowerCase().includes(q) || (d.ip||'').toLowerCase().includes(q) || (d.type||'').toLowerCase().includes(q));
-        }
-
-        async function render() {
-            const container = document.getElementById('devices');
-            const emptyState = document.getElementById('emptyState');
-            const devices = await fetchSummary();
-            lastDevices = devices;
-
-            const filtered = applyFilter(devices);
-            container.innerHTML = '';
-            emptyState.style.display = 'none';
-
-            const onlineCount = devices.filter((d) => d.live && d.live.alive).length;
-            document.getElementById('summaryOnline').innerHTML = `<span class="status-dot"></span>Online: ${onlineCount}`;
-            document.getElementById('summaryOffline').textContent = `Offline: ${devices.length - onlineCount}`;
-
-            if (!devices.length) {
-                emptyState.style.display = '';
-            } else if (!filtered.length) {
-                container.innerHTML = `<p class="mono muted" style="padding:12px;border:1px dashed var(--line);text-align:center">No match for “${document.getElementById('q').value}”</p>`;
-            } else {
-                filtered.forEach((device) => container.appendChild(buildCard(device)));
-            }
-        }
-
-        document.getElementById('refreshBtn').addEventListener('click', render);
-        document.getElementById('q').addEventListener('input', () => {
-            // live filter without refetch
-            const container = document.getElementById('devices');
-            container.innerHTML = '';
-            const filtered = applyFilter(lastDevices);
-            if (!lastDevices.length) return;
-            if (!filtered.length) {
-                container.innerHTML = `<p class="mono muted" style="padding:12px;border:1px dashed var(--line);text-align:center">No match for “${document.getElementById('q').value}”</p>`;
-            } else {
-                filtered.forEach((d) => container.appendChild(buildCard(d)));
-            }
-        });
-        document.getElementById('exportBtn').addEventListener('click', async () => {
-            try {
-                const res = await fetch('/devices', { credentials: 'include' });
-                const data = await res.json();
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url; a.download = 'beacon-devices.json'; a.click();
-                URL.revokeObjectURL(url);
-            } catch { alert('Export failed — not authenticated?'); }
-        });
-        document.getElementById('demoLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            useDemo = true;
-            render();
-        });
-
-        // live updates (if authenticated)
-        try {
-            const s = io();
-            s.on('device:update', render);
-            s.on('monitor:tick', render);
-        } catch {}
-
-        render();
-    </script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/site.js"></script>
+<script src="js/index.js"></script>
 </body>
 </html>

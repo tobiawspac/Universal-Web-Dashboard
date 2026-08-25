@@ -5,263 +5,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
     <title>Alerts — BEACON</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
 </head>
 <body>
 
-    <header>
-        <div class="brand">
-            <div class="brand-mark">◉</div>
-            <div class="brand-text">
-                <div class="brand-name">BEACON</div>
-                <div class="brand-sub">Alerting</div>
+<header>
+    <span class="brand-name">BEACON</span>
+    <nav class="topnav">
+        <a href="index.html">Dashboard</a>
+        <a href="terminal.html">Terminal</a>
+        <a href="discovery.html">Discovery</a>
+        <a href="alerts.html">Alerts</a>
+        <a href="plugins.html">Plugins</a>
+        <a href="widgets.html">Widgets</a>
+        <a href="settings.html">Settings</a>
+        <button class="button2 danger" id="logoutBtn">Logout</button>
+    </nav>
+</header>
+<main>
+    <div class="card">
+        <div class="section-title">Add Alert Channel</div>
+        <div class="form-row">
+            <div class="form-group small">
+                <label class="field-label">Type</label>
+                <select id="channelType">
+                    <option value="webhook">Webhook</option>
+                    <option value="discord">Discord</option>
+                    <option value="telegram">Telegram</option>
+                    <option value="email">Email (SMTP)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="field-label">Name</label>
+                <input type="text" id="channelName" placeholder="field-ops">
+            </div>
+            <div id="channelFields" style="flex:2;min-width:250px;display:flex;gap:8px;flex-wrap:wrap;"></div>
+            <div class="form-group small">
+                <button class="button1" id="addChannelBtn" style="width:100%">Add</button>
             </div>
         </div>
-        <nav class="topnav">
-            <a href="index.html">Dashboard</a>
-            <a href="terminal.html">Terminal</a>
-            <a href="discovery.html">Discovery</a>
-            <a href="alerts.html">Alerts</a>
-            <a href="plugins.html">Plugins</a>
-            <a href="widgets.html">Widgets</a>
-            <a href="settings.html">Settings</a>
-            <button class="button2 danger" id="logoutBtn">Logout</button>
-        </nav>
-    </header>
-    <main>
-        <div class="card">
-            <div class="section-title">Add Alert Channel</div>
-            <div class="form-row">
-                <div class="form-group small">
-                    <label class="field-label">Type</label>
-                    <select id="channelType">
-                        <option value="webhook">Webhook</option>
-                        <option value="discord">Discord</option>
-                        <option value="telegram">Telegram</option>
-                        <option value="email">Email (SMTP)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="field-label">Name</label>
-                    <input type="text" id="channelName" placeholder="field-ops">
-                </div>
-                <div id="channelFields" style="flex:2;min-width:250px;display:flex;gap:8px;flex-wrap:wrap;"></div>
-                <div class="form-group small">
-                    <button class="button1" id="addChannelBtn" style="width:100%">Add</button>
-                </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">Channels</div>
+        <div id="channelsList" class="mono muted" style="font-size:12px">Loading…</div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">Alert History</div>
+        <div id="alertLog" class="mono muted" style="max-height:400px;overflow-y:auto;font-size:11px">Loading…</div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">Maintenance Windows</div>
+        <div class="form-row">
+            <div class="form-group small">
+                <label class="field-label">Device</label>
+                <select id="maintDevice"></select>
+            </div>
+            <div class="form-group">
+                <label class="field-label">Start</label>
+                <input type="datetime-local" id="maintStart">
+            </div>
+            <div class="form-group">
+                <label class="field-label">End</label>
+                <input type="datetime-local" id="maintEnd">
+            </div>
+            <div class="form-group">
+                <label class="field-label">Note</label>
+                <input type="text" id="maintNote" placeholder="Scheduled work">
+            </div>
+            <div class="form-group small">
+                <button class="button1" id="addMaintBtn" style="width:100%">Add</button>
             </div>
         </div>
+        <div id="maintList" class="mono muted" style="margin-top:12px;font-size:11px"></div>
+    </div>
+</main>
 
-        <div class="card">
-            <div class="section-title">Channels</div>
-            <div id="channelsList" class="mono muted" style="font-size:12px">Loading…</div>
-        </div>
-
-        <div class="card">
-            <div class="section-title">Alert History</div>
-            <div id="alertLog" class="mono muted" style="max-height:400px;overflow-y:auto;font-size:11px">Loading…</div>
-        </div>
-
-        <div class="card">
-            <div class="section-title">Maintenance Windows</div>
-            <div class="form-row">
-                <div class="form-group small">
-                    <label class="field-label">Device</label>
-                    <select id="maintDevice"></select>
-                </div>
-                <div class="form-group">
-                    <label class="field-label">Start</label>
-                    <input type="datetime-local" id="maintStart">
-                </div>
-                <div class="form-group">
-                    <label class="field-label">End</label>
-                    <input type="datetime-local" id="maintEnd">
-                </div>
-                <div class="form-group">
-                    <label class="field-label">Note</label>
-                    <input type="text" id="maintNote" placeholder="Scheduled work">
-                </div>
-                <div class="form-group small">
-                    <button class="button1" id="addMaintBtn" style="width:100%">Add</button>
-                </div>
-            </div>
-            <div id="maintList" class="mono muted" style="margin-top:12px;font-size:11px"></div>
-        </div>
-    </main>
-
-    <script>
-        document.getElementById('logoutBtn').addEventListener('click', () => { document.cookie = 'dashboard_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'; location.reload(); });
-
-        const FIELDS = {
-            webhook: [{ key: 'url', label: 'Webhook URL', placeholder: 'https://…' }],
-            discord: [{ key: 'webhookUrl', label: 'Discord Webhook URL', placeholder: 'https://discord.com/api/webhooks/…' }],
-            telegram: [
-                { key: 'botToken', label: 'Bot Token', placeholder: '123456:ABC…' },
-                { key: 'chatId', label: 'Chat ID', placeholder: '-100…' },
-            ],
-            email: [
-                { key: 'smtp_host', label: 'SMTP Host', placeholder: 'smtp.gmail.com' },
-                { key: 'smtp_port', label: 'SMTP Port', placeholder: '587', value: '587' },
-                { key: 'smtp_user', label: 'SMTP User', placeholder: 'user@gmail.com' },
-                { key: 'smtp_pass', label: 'SMTP Password', placeholder: '••••', type: 'password' },
-                { key: 'to', label: 'To Email', placeholder: 'admin@example.com' },
-            ],
-        };
-
-        const typeSelect = document.getElementById('channelType');
-        const fieldsDiv = document.getElementById('channelFields');
-
-        function renderFields() {
-            const fields = FIELDS[typeSelect.value] || [];
-            fieldsDiv.innerHTML = fields.map((f) =>
-                `<div style="flex:1;min-width:140px;">
-                    <label class="field-label">${f.label}</label>
-                    <input type="${f.type || 'text'}" data-key="${f.key}" placeholder="${f.placeholder || ''}" value="${f.value || ''}">
-                </div>`
-            ).join('');
-        }
-        typeSelect.addEventListener('change', renderFields);
-        renderFields();
-
-        document.getElementById('addChannelBtn').addEventListener('click', async () => {
-            const type = typeSelect.value;
-            const name = document.getElementById('channelName').value.trim();
-            if (!name) return alert('Enter a channel name');
-            const config = {};
-            fieldsDiv.querySelectorAll('input').forEach((el) => {
-                const key = el.dataset.key;
-                let val = el.value.trim();
-                if (key === 'smtp_port') val = Number(val) || 587;
-                config[key] = val;
-            });
-            const res = await fetch('/api/alerts/channels', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type, name, config }),
-                credentials: 'include',
-            });
-            if (res.ok) {
-                document.getElementById('channelName').value = '';
-                fieldsDiv.innerHTML = '';
-                renderFields();
-                loadChannels();
-            } else {
-                const err = await res.json();
-                alert(err.error || 'Failed');
-            }
-        });
-
-        async function loadChannels() {
-            const res = await fetch('/api/alerts/channels', { credentials: 'include' });
-            const channels = await res.json();
-            const div = document.getElementById('channelsList');
-            if (!channels.length) { div.textContent = 'No channels configured.'; return; }
-            div.innerHTML = channels.map((ch) => `
-                <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);">
-                    <span style="color:var(--accent);font-weight:700;min-width:80px;" class="mono">${ch.type}</span>
-                    <span style="flex:1;">${ch.name}</span>
-                    <span style="font-size:10px;color:${ch.enabled ? 'var(--accent)' : 'var(--ink-dim)'}" class="mono">${ch.enabled ? 'ON' : 'OFF'}</span>
-                    <button class="button2" onclick="testChannel(${ch.id})">Test</button>
-                    <button class="button2" onclick="toggleChannel(${ch.id}, ${ch.enabled ? 0 : 1})">${ch.enabled ? 'Disable' : 'Enable'}</button>
-                    <button class="button2 danger" onclick="deleteChannel(${ch.id})">Delete</button>
-                </div>
-            `).join('');
-        }
-
-        window.testChannel = async (id) => {
-            const res = await fetch(`/api/alerts/channels/${id}/test`, { method: 'POST', credentials: 'include' });
-            const data = await res.json();
-            alert(data.success ? 'Test sent!' : `Failed: ${data.error}`);
-        };
-
-        window.toggleChannel = async (id, enabled) => {
-            await fetch(`/api/alerts/channels/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ enabled }),
-                credentials: 'include',
-            });
-            loadChannels();
-        };
-
-        window.deleteChannel = async (id) => {
-            if (!confirm('Delete this channel?')) return;
-            await fetch(`/api/alerts/channels/${id}`, { method: 'DELETE', credentials: 'include' });
-            loadChannels();
-        };
-
-        async function loadLog() {
-            const res = await fetch('/api/alerts/log?limit=50', { credentials: 'include' });
-            const rows = await res.json();
-            const div = document.getElementById('alertLog');
-            if (!rows.length) { div.textContent = 'No alerts yet.'; return; }
-            div.innerHTML = rows.map((r) => {
-                const color = r.event_type === 'device_down' ? 'var(--danger)' : 'var(--accent)';
-                const dot = r.event_type === 'device_down' ? '●' : '●';
-                const time = new Date(r.sent_at).toLocaleString('cs');
-                return `<div style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;">
-                    <span style="color:${color}">${dot}</span>
-                    <span style="color:${color};font-weight:700;min-width:80px;">${r.event_type}</span>
-                    <span style="flex:1;">${r.device_name || '?'} — ${r.message}</span>
-                    <span style="font-size:10px;color:var(--ink-dim);">${time}</span>
-                    ${r.suppressed ? '<span style="font-size:10px;color:var(--ink-dim);">[suppressed]</span>' : ''}
-                    ${r.success === 0 ? '<span style="font-size:10px;color:var(--danger);">[failed]</span>' : ''}
-                </div>`;
-            }).join('');
-        }
-
-        async function loadDevices() {
-            const res = await fetch('/devices', { credentials: 'include' });
-            const devices = await res.json();
-            const sel = document.getElementById('maintDevice');
-            sel.innerHTML = devices.map((d) => `<option value="${d.id}">${d.name} (${d.ip})</option>`).join('');
-            sel._devices = devices;
-        }
-
-        document.getElementById('addMaintBtn').addEventListener('click', async () => {
-            const sel = document.getElementById('maintDevice');
-            const deviceId = parseInt(sel.value);
-            if (!deviceId) return alert('Select a device');
-            const startsAt = new Date(document.getElementById('maintStart').value).getTime();
-            const endsAt = new Date(document.getElementById('maintEnd').value).getTime();
-            const note = document.getElementById('maintNote').value.trim();
-            if (!startsAt || !endsAt || startsAt >= endsAt) return alert('Set valid start/end times');
-            const res = await fetch('/api/maintenance', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ deviceId, startsAt, endsAt, note }),
-                credentials: 'include',
-            });
-            if (res.ok) loadMaintenance();
-            else alert('Failed');
-        });
-
-        async function loadMaintenance() {
-            const res = await fetch('/api/maintenance', { credentials: 'include' });
-            const rows = await res.json();
-            const div = document.getElementById('maintList');
-            if (!rows.length) { div.textContent = 'No maintenance windows.'; return; }
-            div.innerHTML = rows.map((r) => {
-                const start = new Date(r.starts_at).toLocaleString('cs');
-                const end = new Date(r.ends_at).toLocaleString('cs');
-                return `<div style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;">
-                    <span style="flex:1;">${r.device_name || 'Device #' + r.device_id}</span>
-                    <span style="font-size:10px;color:var(--ink-dim);">${start} — ${end}</span>
-                    ${r.note ? `<span style="font-size:10px;color:var(--ink-dim);">(${r.note})</span>` : ''}
-                    <button class="button2 danger" onclick="deleteMaint(${r.id})">Delete</button>
-                </div>`;
-            }).join('');
-        }
-
-        window.deleteMaint = async (id) => {
-            await fetch(`/api/maintenance/${id}`, { method: 'DELETE', credentials: 'include' });
-            loadMaintenance();
-        };
-
-        loadChannels();
-        loadLog();
-        loadDevices();
-        loadMaintenance();
-    </script>
+<script src="js/site.js"></script>
+<script src="js/alerts.js"></script>
 </body>
 </html>

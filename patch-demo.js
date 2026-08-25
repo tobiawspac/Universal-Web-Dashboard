@@ -1,77 +1,23 @@
 const fs = require('fs');
 const path = require('path');
 
+const PUB = path.join(__dirname, 'public');
 const DEMO = path.join(__dirname, 'demo');
 
-// canonical nav for demo (password-less, all features)
-const navHTML = `
-        <nav class="topnav">
-            <a href="index.html">Dashboard</a>
-            <a href="terminal.html">Terminal</a>
-            <a href="discovery.html">Discovery</a>
-            <a href="alerts.html">Alerts</a>
-            <a href="plugins.html">Plugins</a>
-            <a href="widgets.html">Widgets</a>
-            <a href="settings.html">Settings</a>
-            <span class="badge-demo" style="border-color:var(--accent);color:var(--accent)">Demo · no login</span>
-        </nav>`;
+// smazat stary demo obsah
+fs.rmSync(DEMO, { recursive: true, force: true });
 
-const files = fs.readdirSync(DEMO).filter(f => f.endsWith('.html'));
-for (const file of files) {
-  const fp = path.join(DEMO, file);
-  let html = fs.readFileSync(fp, 'utf8');
+// nakopirovat public -> demo
+fs.cpSync(PUB, DEMO, { recursive: true });
+console.log('copied public -> demo');
 
-  // replace any <nav class="topnav">...</nav> with canonical
-  // also handle header brand + nav
-  if (html.includes('<nav class="topnav">')) {
-    html = html.replace(/<nav class="topnav">[\s\S]*?<\/nav>/, navHTML.trim());
-  } else if (file !== 'login.html' && file !== 'onboarding.html') {
-    // if no nav, inject after header brand (should not happen)
-  }
-
-  // For login.html: make it demo entry without password
-  if (file === 'login.html') {
-    html = `<!DOCTYPE html>
-<html lang="cs">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="dark">
-    <title>BEACON — Demo</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-<div class="scene">
-  <div class="login-shell">
-    <div class="login-brand">
-      <div class="login-mark">◉</div>
-      <div class="login-title">BEA<span>CON</span> DEMO</div>
-      <div class="login-subtitle">Field Network Monitor · GitHub Pages · no password</div>
-    </div>
-    <div class="login-card">
-      <p class="mono muted" style="font-size:11px;text-align:center;margin-bottom:14px">Toto je statické demo bez backendu. Všechna data jsou mock (DEMO_DEVICES).<br>Žádné heslo, žádný server.</p>
-      <a href="index.html" class="btn" style="display:block;text-align:center;text-decoration:none;line-height:1.2">Enter Demo →</a>
-      <p class="mono" style="font-size:10px;text-align:center;margin-top:12px;opacity:.6">Plná verze: <code>git clone … && node setup.js && npm start</code></p>
-      <div class="login-meta">000004 · FBFEF9 · 0C6291 · A63446 · 7E1946 · v1.1 demo</div>
-    </div>
-    <div class="login-help">
-      <a href="https://github.com/tobiawspac/Universal-Web-Dashboard" target="_blank" rel="noopener" class="mono" style="font-size:11px">GitHub → Universal-Web-Dashboard</a>
-    </div>
-  </div>
-</div>
-</body>
-</html>`;
-  }
-
-  // For other pages: inject demo mock script before </body>
-  // Remove auth redirects and make fetch work offline
-  const demoScript = `
+// mock fetch + io, musi byt PRVNI script v <head> nez se spusti strankove js
+const demoShim = `
 <script>
-// DEMO MODE — GitHub Pages, no backend, no password
+// DEMO MODE - static hosting, zadny backend
 window.__DEMO__ = true;
-// mock fetch for /api/* /devices /ping /health etc — returns demo data
 (function(){
-  const DEMO_DEVICES_MOCK = [
+  var MOCK_DEVICES = [
     { name: 'Main Router', ip: '192.168.1.1', type: 'router', live: { alive: true, latencyMs: 3 }, summary: { uptimePercent: 99.8, totalChecks: 1440 } },
     { name: 'Office Switch', ip: '192.168.1.2', type: 'switch', live: { alive: true, latencyMs: 1 }, summary: { uptimePercent: 100, totalChecks: 1440 } },
     { name: 'File Server', ip: '192.168.1.10', type: 'server', live: { alive: true, latencyMs: 12 }, summary: { uptimePercent: 99.5, totalChecks: 1440 } },
@@ -79,55 +25,99 @@ window.__DEMO__ = true;
     { name: 'IP Camera', ip: '192.168.1.50', type: 'camera', live: { alive: true, latencyMs: 22 }, summary: { uptimePercent: 97.2, totalChecks: 1440 } },
     { name: 'Dev PC', ip: '192.168.1.100', type: 'pc', live: { alive: false, latencyMs: null }, summary: { uptimePercent: 85.3, totalChecks: 1440 } },
     { name: 'Printer', ip: '192.168.1.200', type: 'printer', live: { alive: true, latencyMs: 45 }, summary: { uptimePercent: 99.1, totalChecks: 1440 } },
-    { name: 'Guest WiFi AP', ip: '192.168.1.5', type: 'router', live: { alive: true, latencyMs: 2 }, summary: { uptimePercent: 100, totalChecks: 1440 } },
+    { name: 'Guest WiFi AP', ip: '192.168.1.5', type: 'router', live: { alive: true, latencyMs: 2 }, summary: { uptimePercent: 100, totalChecks: 1440 } }
   ];
-  const origFetch = window.fetch.bind(window);
-  window.fetch = async (url, opts) => {
-    const u = String(url);
-    // health
-    if (u.includes('/health')) return new Response(JSON.stringify({ ok: true, service: 'beacon-demo' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    // dashboard summary
-    if (u.includes('/api/dashboard-summary')) return new Response(JSON.stringify(DEMO_DEVICES_MOCK), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    // devices
-    if (u.includes('/devices')) return new Response(JSON.stringify(DEMO_DEVICES_MOCK.map(d=>({id: Math.random(), name:d.name, ip:d.ip, type:d.type}))), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    // history / summary
-    if (u.includes('/history/') || u.includes('/summary/')) {
-      if (u.includes('/summary/')) return new Response(JSON.stringify({ uptimePercent: 99.2, avgLatencyMs: 8, lastStatus: 'online', totalChecks: 1440 }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      const rows = Array.from({length: 60}, (_,i)=>({ host: '192.168.1.1', timestamp: Date.now()-i*60000, alive: Math.random()>0.1?1:0, latency_ms: Math.floor(2+Math.random()*20) }));
-      return new Response(JSON.stringify(rows), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  var realFetch = window.fetch ? window.fetch.bind(window) : null;
+  function J(txt){ return new Response(JSON.stringify(txt), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
+  window.fetch = function(url, opts){
+    var u = String(url);
+    if (u.indexOf('/api/dashboard-summary') >= 0) return Promise.resolve(J(MOCK_DEVICES));
+    if (u.indexOf('/devices') >= 0) {
+      return Promise.resolve(J(MOCK_DEVICES.map(function(d,i){ return { id: i+1, name: d.name, ip: d.ip, type: d.type, snmp_enabled: 0 }; })));
     }
-    // ping / check
-    if (u.includes('/ping') || u.includes('/check')) return new Response(JSON.stringify({ host: '127.0.0.1', alive: true, latencyMs: 12 }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    // auth
-    if (u.includes('/api/check-auth')) return new Response(JSON.stringify({ authenticated: true, totpEnabled: false }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    if (u.includes('/api/login') || u.includes('/api/logout') || u.includes('/api/settings') || u.includes('/api/alerts') || u.includes('/api/discovery') || u.includes('/api/snmp') || u.includes('/api/plugins')) {
-      return new Response(JSON.stringify({ ok: true, authenticated: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    if (u.indexOf('/summary/') >= 0) return Promise.resolve(J({ uptimePercent: 99.2, avgLatencyMs: 8, lastStatus: 'online', totalChecks: 1440 }));
+    if (u.indexOf('/history/') >= 0) {
+      var rows = [];
+      for (var i=0;i<60;i++) rows.push({ timestamp: Date.now()-i*60000, alive: Math.random()>0.08?1:0, latency_ms: Math.floor(2+Math.random()*20) });
+      return Promise.resolve(J(rows));
     }
-    // fallback: try real fetch, but if fails return mock empty
-    try { return await origFetch(url, opts); } catch { return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
+    if (u.indexOf('/ping') >= 0 || u.indexOf('/check') >= 0) return Promise.resolve(J({ host: '127.0.0.1', alive: true, latencyMs: 12 }));
+    if (u.indexOf('/health') >= 0) return Promise.resolve(J({ ok: true }));
+    // vsechno ostatni api -> ok/prázdný seznam
+    var empty = [ '/api/alerts', '/api/discovery', '/api/plugins', '/api/snmp', '/api/settings' ];
+    for (var k=0;k<empty.length;k++) {
+      if (u.indexOf(empty[k]) >= 0) return Promise.resolve(J([]));
+    }
+    if (realFetch) return realFetch(u, opts);
+    return Promise.resolve(J([]));
   };
-  // also mock socket.io if not loaded
-  if (typeof io === 'undefined') window.io = function(){ return { on: ()=>{}, emit: ()=>{} }; };
+  // socket.io na static hostingu neni -> no-op
+  window.io = function(){ return { on: function(){}, emit: function(){} }; };
 })();
 </script>
 `;
 
-  if (file !== 'login.html' && !html.includes('window.__DEMO__')) {
-    html = html.replace('</body>', demoScript + '\n</body>');
-  }
+// login.html -> staticky demo vstup bez api
+function demoLogin() {
+  return `<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>Login - BEACON</title>${demoShim}
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
 
-  // Fix logout button if present: make it go to demo login (no API)
-  html = html.replace(/<button class="button2 danger" id="logoutBtn">Logout<\/button>/g, '<a href="login.html" class="button2 danger" style="text-decoration:none;display:inline-flex;align-items:center">Exit Demo</a>');
-  html = html.replace(/document\.getElementById\('logoutBtn'\)[\s\S]*?location\.href = 'login\.html';\s*\}\);/g, '');
+<div class="scene">
+  <div class="login-shell">
+    <div class="login-title">BEACON</div>
+    <div class="login-card">
+      <p class="mono muted" style="font-size:11px;text-align:center;margin-bottom:14px">Statické demo bez backendu.<br>Všechna data jsou mock.</p>
+      <a href="index.html" class="btn" style="display:block;text-align:center;text-decoration:none">Enter Demo →</a>
+      <div class="login-meta">Field Network Monitor · demo · v1.1</div>
+    </div>
+    <div class="login-help">
+      <a href="https://github.com/tobiawspac/Universal-Web-Dashboard" target="_blank" rel="noopener">GitHub repo</a>
+    </div>
+  </div>
+</div>
 
-  // Update title to indicate demo
-  html = html.replace(/<title>(.*?)<\/title>/, `<title>$1 · Demo</title>`).replace('· Demo · Demo', '· Demo');
-
-  fs.writeFileSync(fp, html, 'utf8');
-  console.log(`patched ${file}`);
+</body>
+</html>`;
 }
 
-// add .nojekyll and 404
+const files = fs.readdirSync(DEMO).filter(f => f.endsWith('.html'));
+for (const file of files) {
+  const fp = path.join(DEMO, file);
+  let html = fs.readFileSync(fp, 'utf8');
+
+  if (file === 'login.html') {
+    fs.writeFileSync(fp, demoLogin(), 'utf8');
+    console.log('patched (demo login) ' + file);
+    continue;
+  }
+
+  // shim jako prvni vec do <head>
+  html = html.replace('<head>', '<head>' + demoShim);
+
+  // socket.io script tag na staticu nic nedela, rovnou vyhodit
+  html = html.replace(/\s*<script src="\/socket\.io\/socket\.io\.js"><\/script>/g, '');
+
+  // logout -> exit demo odkaz
+  html = html.replace(/<button class="button2 danger" id="logoutBtn">Logout<\/button>/,
+    '<a href="login.html" class="button2 danger" style="text-decoration:none">Exit Demo</a>');
+
+  // titulek + Demo priznak
+  html = html.replace(/<title>(.*?)<\/title>/, (m, t) => t.includes('Demo') ? m : `<title>${t} · Demo</title>`);
+
+  fs.writeFileSync(fp, html, 'utf8');
+  console.log('patched ' + file);
+}
+
+// pages helpery
 fs.writeFileSync(path.join(DEMO, '.nojekyll'), '');
 fs.writeFileSync(path.join(DEMO, '404.html'), fs.readFileSync(path.join(DEMO, 'index.html'), 'utf8'));
-console.log('demo patch done');
+console.log('demo build done');

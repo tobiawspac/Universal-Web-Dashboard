@@ -1,250 +1,11 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="dark">
-    <title>Welcome — BEACON · Demo</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .onboard-step { display:none; }
-        .onboard-step.active { display:block; }
-        .step-dots { display:flex;gap:8px;justify-content:center;margin:20px 0; }
-        .step-dot { width:8px;height:8px;background:var(--line);transition:background 0.3s; }
-        .step-dot.active { background:var(--accent);box-shadow:0 0 8px var(--accent-glow) }
-        .step-dot.done { background:var(--accent);opacity:0.35; }
-        .onboard-nav { display:flex;justify-content:space-between;margin-top:24px; }
-        .feature-grid { display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0; }
-        .feature-card { padding:16px;background:var(--panel-2);border:1px solid var(--line); }
-        .feature-card h4 { color:var(--accent);margin:0 0 6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-family:'JetBrains Mono', monospace; }
-        .feature-card p { color:var(--ink-dim);font-size:11px;margin:0;line-height:1.5; }
-        @media(max-width:600px) { .feature-grid { grid-template-columns:1fr; } }
-    </style>
-</head>
-<body>
-    <header>
-        <div class="brand">
-            <div class="brand-mark">◉</div>
-            <div class="brand-text">
-                <div class="brand-name">BEACON</div>
-                <div class="brand-sub">Field Network Monitor</div>
-            </div>
-        </div>
-    </header>
-    <main style="max-width:700px;margin:0 auto;">
-        <div class="card onboard-step active" id="step1">
-            <div style="text-align:center;padding:18px 0;">
-                <div class="login-mark" style="margin-bottom:14px">◉</div>
-                <h2 style="color:var(--ink);margin:0 0 8px;letter-spacing:.06em;text-transform:uppercase;font-family:'JetBrains Mono', monospace;font-size:18px">BEACON</h2>
-                <p style="color:var(--accent);font-size:10px;letter-spacing:.18em;text-transform:uppercase;font-family:'JetBrains Mono', monospace">Field Network Monitor</p>
-                <p style="color:var(--ink-dim);font-size:12px;margin-top:10px" class="mono">000004 · FBFEF9 · 0C6291 · field kit for ping / HTTP / SNMP</p>
-            </div>
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <h4>Real-time Monitoring</h4>
-                    <p>Live device status via WebSocket. Latency, uptime, availability in Baltic Blue.</p>
-                </div>
-                <div class="feature-card">
-                    <h4>Alerting</h4>
-                    <p>Discord, Telegram, email, webhook when devices go down or recover.</p>
-                </div>
-                <div class="feature-card">
-                    <h4>Network Discovery</h4>
-                    <p>Auto-scan your subnet — no manual IP entry needed.</p>
-                </div>
-                <div class="feature-card">
-                    <h4>Plugin System</h4>
-                    <p>Custom checks + widgets. Upload as ZIP, extend the kit.</p>
-                </div>
-            </div>
-            <div class="onboard-nav">
-                <span></span>
-                <button class="button1" onclick="goStep(2)">Get Started →</button>
-            </div>
-        </div>
-
-        <div class="card onboard-step" id="step2">
-            <div class="section-title">Set Your Password</div>
-            <p class="mono muted" style="font-size:11px;margin-bottom:16px;">
-                Choose a strong password to secure your beacon. You can change it later in Settings.
-            </p>
-            <div style="max-width:400px;">
-                <label class="field-label">New Password</label>
-                <input type="password" id="onboardPassword" placeholder="••••••••">
-                <label class="field-label" style="margin-top:10px">Confirm Password</label>
-                <input type="password" id="onboardPasswordConfirm" placeholder="••••••••">
-                <p id="onboardPassStatus" class="status-message"></p>
-            </div>
-            <div class="onboard-nav">
-                <button class="button2" onclick="goStep(1)">← Back</button>
-                <button class="button1" id="onboardSetPass">Set Password</button>
-            </div>
-        </div>
-
-        <div class="card onboard-step" id="step3">
-            <div class="section-title">Add Your First Device</div>
-            <p class="mono muted" style="font-size:11px;margin-bottom:16px;">
-                Add a device to start monitoring. You can always add more later.
-            </p>
-            <div style="max-width:400px;">
-                <label class="field-label">Device Name</label>
-                <input type="text" id="onboardDeviceName" placeholder="core-router-01">
-                <label class="field-label" style="margin-top:10px">IP Address</label>
-                <input type="text" id="onboardDeviceIP" placeholder="192.168.1.1">
-                <label class="field-label" style="margin-top:10px">Type</label>
-                <select id="onboardDeviceType">
-                    <option value="router">Router</option>
-                    <option value="switch">Switch</option>
-                    <option value="server">Server</option>
-                    <option value="camera">Camera</option>
-                    <option value="pc">PC</option>
-                    <option value="printer">Printer</option>
-                </select>
-                <button class="button2" id="onboardTestDevice" style="margin-top:12px">Test Connection</button>
-                <p id="onboardTestResult" class="mono" style="font-size:11px;margin-top:8px"></p>
-            </div>
-            <div class="onboard-nav">
-                <button class="button2" onclick="goStep(2)">← Back</button>
-                <div style="display:flex;gap:8px;">
-                    <button class="button2" onclick="goStep(4)">Skip</button>
-                    <button class="button1" id="onboardAddDevice">Add Device</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="card onboard-step" id="step4">
-            <div style="text-align:center;padding:24px 0;">
-                <div style="width:44px;height:44px;background:var(--accent);color:#1a1200;display:grid;place-items:center;margin:0 auto 14px;font-weight:800">✓</div>
-                <h2 style="color:var(--ink);margin:0 0 10px;letter-spacing:.06em;text-transform:uppercase;font-family:'JetBrains Mono', monospace;font-size:18px">You're All Set</h2>
-                <p style="color:var(--ink-dim);font-size:12px;max-width:500px;margin:0 auto 20px;" class="mono">
-                    Your beacon is ready. Field kit deployed.
-                </p>
-                <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-                    <a href="index.html" class="button1" style="text-decoration:none;">Go to Dashboard</a>
-                    <a href="alerts.html" class="button2" style="text-decoration:none;">Set Up Alerts</a>
-                    <a href="discovery.html" class="button2" style="text-decoration:none;">Scan Network</a>
-                    <a href="settings.html" class="button2" style="text-decoration:none;">Settings</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="step-dots">
-            <div class="step-dot active" id="dot1"></div>
-            <div class="step-dot" id="dot2"></div>
-            <div class="step-dot" id="dot3"></div>
-            <div class="step-dot" id="dot4"></div>
-        </div>
-    </main>
-
-    <script>
-        let currentStep = 1;
-
-        function goStep(n) {
-            document.querySelectorAll('.onboard-step').forEach((el) => el.classList.remove('active'));
-            document.querySelectorAll('.step-dot').forEach((el) => el.classList.remove('active'));
-            for (let i = 1; i < n; i++) document.getElementById('dot' + i).classList.add('done');
-            document.getElementById('step' + n).classList.add('active');
-            document.getElementById('dot' + n).classList.add('active');
-            currentStep = n;
-        }
-
-        (async () => {
-            try {
-                const res = await fetch('/api/check-auth', { credentials: 'include' });
-                const data = await res.json();
-                if (data.authenticated) goStep(4);
-            } catch {}
-        })();
-
-        document.getElementById('onboardSetPass').addEventListener('click', async () => {
-            const pass = document.getElementById('onboardPassword').value;
-            const confirm = document.getElementById('onboardPasswordConfirm').value;
-            const status = document.getElementById('onboardPassStatus');
-
-            if (!pass || pass.length < 4) {
-                status.textContent = 'Password must be at least 4 characters.';
-                status.style.color = 'var(--danger)';
-                return;
-            }
-            if (pass !== confirm) {
-                status.textContent = 'Passwords do not match.';
-                status.style.color = 'var(--danger)';
-                return;
-            }
-
-            const loginRes = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: 'admin123' }),
-                credentials: 'include',
-            });
-            if (loginRes.ok) {
-                const changeRes = await fetch('/api/settings/password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ currentPassword: 'admin123', newPassword: pass }),
-                    credentials: 'include',
-                });
-                if (changeRes.ok) {
-                    status.textContent = 'Password set!';
-                    status.style.color = 'var(--accent)';
-                    setTimeout(() => goStep(3), 800);
-                } else {
-                    const err = await changeRes.json();
-                    status.textContent = err.error || 'Failed';
-                    status.style.color = 'var(--danger)';
-                }
-            } else {
-                status.textContent = 'Login failed';
-                status.style.color = 'var(--danger)';
-            }
-        });
-
-        document.getElementById('onboardTestDevice').addEventListener('click', async () => {
-            const ip = document.getElementById('onboardDeviceIP').value.trim();
-            if (!ip) { alert('Enter an IP address'); return; }
-            const status = document.getElementById('onboardTestResult');
-            status.textContent = 'Testing…';
-            status.style.color = 'var(--ink-dim)';
-            const res = await fetch('/ping', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ host: ip, timeout: 3000 }),
-                credentials: 'include',
-            });
-            const data = await res.json();
-            if (data.alive) {
-                status.textContent = `Online (${data.latencyMs}ms)`;
-                status.style.color = 'var(--accent)';
-            } else {
-                status.textContent = 'Offline or unreachable';
-                status.style.color = 'var(--danger)';
-            }
-        });
-
-        document.getElementById('onboardAddDevice').addEventListener('click', async () => {
-            const name = document.getElementById('onboardDeviceName').value.trim();
-            const ip = document.getElementById('onboardDeviceIP').value.trim();
-            const type = document.getElementById('onboardDeviceType').value;
-            if (!name || !ip) { alert('Enter name and IP'); return; }
-
-            const res = await fetch('/devices', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, ip, type }),
-                credentials: 'include',
-            });
-            if (res.ok) goStep(4);
-            else alert('Failed to add device');
-        });
-    </script>
-
 <script>
-// DEMO MODE — GitHub Pages, no backend, no password
+// DEMO MODE - static hosting, zadny backend
 window.__DEMO__ = true;
-// mock fetch for /api/* /devices /ping /health etc — returns demo data
 (function(){
-  const DEMO_DEVICES_MOCK = [
+  var MOCK_DEVICES = [
     { name: 'Main Router', ip: '192.168.1.1', type: 'router', live: { alive: true, latencyMs: 3 }, summary: { uptimePercent: 99.8, totalChecks: 1440 } },
     { name: 'Office Switch', ip: '192.168.1.2', type: 'switch', live: { alive: true, latencyMs: 1 }, summary: { uptimePercent: 100, totalChecks: 1440 } },
     { name: 'File Server', ip: '192.168.1.10', type: 'server', live: { alive: true, latencyMs: 12 }, summary: { uptimePercent: 99.5, totalChecks: 1440 } },
@@ -252,37 +13,165 @@ window.__DEMO__ = true;
     { name: 'IP Camera', ip: '192.168.1.50', type: 'camera', live: { alive: true, latencyMs: 22 }, summary: { uptimePercent: 97.2, totalChecks: 1440 } },
     { name: 'Dev PC', ip: '192.168.1.100', type: 'pc', live: { alive: false, latencyMs: null }, summary: { uptimePercent: 85.3, totalChecks: 1440 } },
     { name: 'Printer', ip: '192.168.1.200', type: 'printer', live: { alive: true, latencyMs: 45 }, summary: { uptimePercent: 99.1, totalChecks: 1440 } },
-    { name: 'Guest WiFi AP', ip: '192.168.1.5', type: 'router', live: { alive: true, latencyMs: 2 }, summary: { uptimePercent: 100, totalChecks: 1440 } },
+    { name: 'Guest WiFi AP', ip: '192.168.1.5', type: 'router', live: { alive: true, latencyMs: 2 }, summary: { uptimePercent: 100, totalChecks: 1440 } }
   ];
-  const origFetch = window.fetch.bind(window);
-  window.fetch = async (url, opts) => {
-    const u = String(url);
-    // health
-    if (u.includes('/health')) return new Response(JSON.stringify({ ok: true, service: 'beacon-demo' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    // dashboard summary
-    if (u.includes('/api/dashboard-summary')) return new Response(JSON.stringify(DEMO_DEVICES_MOCK), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    // devices
-    if (u.includes('/devices')) return new Response(JSON.stringify(DEMO_DEVICES_MOCK.map(d=>({id: Math.random(), name:d.name, ip:d.ip, type:d.type}))), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    // history / summary
-    if (u.includes('/history/') || u.includes('/summary/')) {
-      if (u.includes('/summary/')) return new Response(JSON.stringify({ uptimePercent: 99.2, avgLatencyMs: 8, lastStatus: 'online', totalChecks: 1440 }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      const rows = Array.from({length: 60}, (_,i)=>({ host: '192.168.1.1', timestamp: Date.now()-i*60000, alive: Math.random()>0.1?1:0, latency_ms: Math.floor(2+Math.random()*20) }));
-      return new Response(JSON.stringify(rows), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  var realFetch = window.fetch ? window.fetch.bind(window) : null;
+  function J(txt){ return new Response(JSON.stringify(txt), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
+  window.fetch = function(url, opts){
+    var u = String(url);
+    if (u.indexOf('/api/dashboard-summary') >= 0) return Promise.resolve(J(MOCK_DEVICES));
+    if (u.indexOf('/devices') >= 0) {
+      return Promise.resolve(J(MOCK_DEVICES.map(function(d,i){ return { id: i+1, name: d.name, ip: d.ip, type: d.type, snmp_enabled: 0 }; })));
     }
-    // ping / check
-    if (u.includes('/ping') || u.includes('/check')) return new Response(JSON.stringify({ host: '127.0.0.1', alive: true, latencyMs: 12 }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    // auth
-    if (u.includes('/api/check-auth')) return new Response(JSON.stringify({ authenticated: true, totpEnabled: false }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    if (u.includes('/api/login') || u.includes('/api/logout') || u.includes('/api/settings') || u.includes('/api/alerts') || u.includes('/api/discovery') || u.includes('/api/snmp') || u.includes('/api/plugins')) {
-      return new Response(JSON.stringify({ ok: true, authenticated: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    if (u.indexOf('/summary/') >= 0) return Promise.resolve(J({ uptimePercent: 99.2, avgLatencyMs: 8, lastStatus: 'online', totalChecks: 1440 }));
+    if (u.indexOf('/history/') >= 0) {
+      var rows = [];
+      for (var i=0;i<60;i++) rows.push({ timestamp: Date.now()-i*60000, alive: Math.random()>0.08?1:0, latency_ms: Math.floor(2+Math.random()*20) });
+      return Promise.resolve(J(rows));
     }
-    // fallback: try real fetch, but if fails return mock empty
-    try { return await origFetch(url, opts); } catch { return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
+    if (u.indexOf('/ping') >= 0 || u.indexOf('/check') >= 0) return Promise.resolve(J({ host: '127.0.0.1', alive: true, latencyMs: 12 }));
+    if (u.indexOf('/health') >= 0) return Promise.resolve(J({ ok: true }));
+    // vsechno ostatni api -> ok/prázdný seznam
+    var empty = [ '/api/alerts', '/api/discovery', '/api/plugins', '/api/snmp', '/api/settings' ];
+    for (var k=0;k<empty.length;k++) {
+      if (u.indexOf(empty[k]) >= 0) return Promise.resolve(J([]));
+    }
+    if (realFetch) return realFetch(u, opts);
+    return Promise.resolve(J([]));
   };
-  // also mock socket.io if not loaded
-  if (typeof io === 'undefined') window.io = function(){ return { on: ()=>{}, emit: ()=>{} }; };
+  // socket.io na static hostingu neni -> no-op
+  window.io = function(){ return { on: function(){}, emit: function(){} }; };
 })();
 </script>
 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>Welcome — BEACON · Demo</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+    <style>
+        .onboard-step{display:none}
+        .onboard-step.active{display:block}
+        .step-dots{display:flex;gap:8px;justify-content:center;margin:20px 0}
+        .step-dot{width:8px;height:8px;background:var(--line)}
+        .step-dot.active,.step-dot.done{background:var(--ink-dim)}
+        .step-dot.done{opacity:.4}
+        .onboard-nav{display:flex;justify-content:space-between;margin-top:24px}
+        .feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}
+        .feature-card{padding:14px;border:1px solid var(--line)}
+        .feature-card h4{font-size:11px;text-transform:uppercase;margin-bottom:6px}
+        .feature-card p{color:var(--ink-dim);font-size:11px;line-height:1.5}
+        @media(max-width:600px){.feature-grid{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+<header>
+    <span class="brand-name">BEACON</span>
+</header>
+<main style="max-width:700px;margin:0 auto;">
+    <div class="card onboard-step active" id="step1">
+        <div style="text-align:center;padding:14px 0;">
+            <h2 style="margin:0 0 8px;font-size:16px;text-transform:uppercase">BEACON</h2>
+            <p style="color:var(--ink-dim);font-size:12px" class="mono">field kit for ping / HTTP / SNMP</p>
+        </div>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>Real-time Monitoring</h4>
+                <p>Live device status via WebSocket. Latency, uptime, availability.</p>
+            </div>
+            <div class="feature-card">
+                <h4>Alerting</h4>
+                <p>Discord, Telegram, email, webhook when devices go down or recover.</p>
+            </div>
+            <div class="feature-card">
+                <h4>Network Discovery</h4>
+                <p>Auto-scan your subnet — no manual IP entry needed.</p>
+            </div>
+            <div class="feature-card">
+                <h4>Plugin System</h4>
+                <p>Custom checks + widgets. Upload as ZIP, extend the kit.</p>
+            </div>
+        </div>
+        <div class="onboard-nav">
+            <span></span>
+            <button class="button1" onclick="goStep(2)">Get Started →</button>
+        </div>
+    </div>
+
+    <div class="card onboard-step" id="step2">
+        <div class="section-title">Set Your Password</div>
+        <p class="mono muted" style="font-size:11px;margin-bottom:16px;">
+            Choose a strong password to secure your beacon. You can change it later in Settings.
+        </p>
+        <div style="max-width:400px;">
+            <label class="field-label">New Password</label>
+            <input type="password" id="onboardPassword" placeholder="********">
+            <label class="field-label" style="margin-top:10px">Confirm Password</label>
+            <input type="password" id="onboardPasswordConfirm" placeholder="********">
+            <p id="onboardPassStatus" class="status-message"></p>
+        </div>
+        <div class="onboard-nav">
+            <button class="button2" onclick="goStep(1)">← Back</button>
+            <button class="button1" id="onboardSetPass">Set Password</button>
+        </div>
+    </div>
+
+    <div class="card onboard-step" id="step3">
+        <div class="section-title">Add Your First Device</div>
+        <p class="mono muted" style="font-size:11px;margin-bottom:16px;">
+            Add a device to start monitoring. You can always add more later.
+        </p>
+        <div style="max-width:400px;">
+            <label class="field-label">Device Name</label>
+            <input type="text" id="onboardDeviceName" placeholder="core-router-01">
+            <label class="field-label" style="margin-top:10px">IP Address</label>
+            <input type="text" id="onboardDeviceIP" placeholder="192.168.1.1">
+            <label class="field-label" style="margin-top:10px">Type</label>
+            <select id="onboardDeviceType">
+                <option value="router">Router</option>
+                <option value="switch">Switch</option>
+                <option value="server">Server</option>
+                <option value="camera">Camera</option>
+                <option value="pc">PC</option>
+                <option value="printer">Printer</option>
+            </select>
+            <button class="button2" id="onboardTestDevice" style="margin-top:12px">Test Connection</button>
+            <p id="onboardTestResult" class="mono" style="font-size:11px;margin-top:8px"></p>
+        </div>
+        <div class="onboard-nav">
+            <button class="button2" onclick="goStep(2)">← Back</button>
+            <div style="display:flex;gap:8px;">
+                <button class="button2" onclick="goStep(4)">Skip</button>
+                <button class="button1" id="onboardAddDevice">Add Device</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card onboard-step" id="step4">
+        <div style="text-align:center;padding:20px 0;">
+            <h2 style="margin:0 0 10px;font-size:16px;text-transform:uppercase">You're All Set</h2>
+            <p style="color:var(--ink-dim);font-size:12px;margin-bottom:20px;" class="mono">
+                Your beacon is ready. Field kit deployed.
+            </p>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                <a href="index.html" class="button1" style="text-decoration:none;">Go to Dashboard</a>
+                <a href="alerts.html" class="button2" style="text-decoration:none;">Set Up Alerts</a>
+                <a href="discovery.html" class="button2" style="text-decoration:none;">Scan Network</a>
+                <a href="settings.html" class="button2" style="text-decoration:none;">Settings</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="step-dots">
+        <div class="step-dot active" id="dot1"></div>
+        <div class="step-dot" id="dot2"></div>
+        <div class="step-dot" id="dot3"></div>
+        <div class="step-dot" id="dot4"></div>
+    </div>
+</main>
+
+<script src="js/site.js"></script>
+<script src="js/onboarding.js"></script>
 </body>
 </html>

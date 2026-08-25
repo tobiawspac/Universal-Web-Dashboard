@@ -1,64 +1,103 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
+<script>
+// DEMO MODE - static hosting, zadny backend
+window.__DEMO__ = true;
+(function(){
+  var MOCK_DEVICES = [
+    { name: 'Main Router', ip: '192.168.1.1', type: 'router', live: { alive: true, latencyMs: 3 }, summary: { uptimePercent: 99.8, totalChecks: 1440 } },
+    { name: 'Office Switch', ip: '192.168.1.2', type: 'switch', live: { alive: true, latencyMs: 1 }, summary: { uptimePercent: 100, totalChecks: 1440 } },
+    { name: 'File Server', ip: '192.168.1.10', type: 'server', live: { alive: true, latencyMs: 12 }, summary: { uptimePercent: 99.5, totalChecks: 1440 } },
+    { name: 'NAS Storage', ip: '192.168.1.20', type: 'server', live: { alive: true, latencyMs: 8 }, summary: { uptimePercent: 98.9, totalChecks: 1440 } },
+    { name: 'IP Camera', ip: '192.168.1.50', type: 'camera', live: { alive: true, latencyMs: 22 }, summary: { uptimePercent: 97.2, totalChecks: 1440 } },
+    { name: 'Dev PC', ip: '192.168.1.100', type: 'pc', live: { alive: false, latencyMs: null }, summary: { uptimePercent: 85.3, totalChecks: 1440 } },
+    { name: 'Printer', ip: '192.168.1.200', type: 'printer', live: { alive: true, latencyMs: 45 }, summary: { uptimePercent: 99.1, totalChecks: 1440 } },
+    { name: 'Guest WiFi AP', ip: '192.168.1.5', type: 'router', live: { alive: true, latencyMs: 2 }, summary: { uptimePercent: 100, totalChecks: 1440 } }
+  ];
+  var realFetch = window.fetch ? window.fetch.bind(window) : null;
+  function J(txt){ return new Response(JSON.stringify(txt), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
+  window.fetch = function(url, opts){
+    var u = String(url);
+    if (u.indexOf('/api/dashboard-summary') >= 0) return Promise.resolve(J(MOCK_DEVICES));
+    if (u.indexOf('/devices') >= 0) {
+      return Promise.resolve(J(MOCK_DEVICES.map(function(d,i){ return { id: i+1, name: d.name, ip: d.ip, type: d.type, snmp_enabled: 0 }; })));
+    }
+    if (u.indexOf('/summary/') >= 0) return Promise.resolve(J({ uptimePercent: 99.2, avgLatencyMs: 8, lastStatus: 'online', totalChecks: 1440 }));
+    if (u.indexOf('/history/') >= 0) {
+      var rows = [];
+      for (var i=0;i<60;i++) rows.push({ timestamp: Date.now()-i*60000, alive: Math.random()>0.08?1:0, latency_ms: Math.floor(2+Math.random()*20) });
+      return Promise.resolve(J(rows));
+    }
+    if (u.indexOf('/ping') >= 0 || u.indexOf('/check') >= 0) return Promise.resolve(J({ host: '127.0.0.1', alive: true, latencyMs: 12 }));
+    if (u.indexOf('/health') >= 0) return Promise.resolve(J({ ok: true }));
+    // vsechno ostatni api -> ok/prázdný seznam
+    var empty = [ '/api/alerts', '/api/discovery', '/api/plugins', '/api/snmp', '/api/settings' ];
+    for (var k=0;k<empty.length;k++) {
+      if (u.indexOf(empty[k]) >= 0) return Promise.resolve(J([]));
+    }
+    if (realFetch) return realFetch(u, opts);
+    return Promise.resolve(J([]));
+  };
+  // socket.io na static hostingu neni -> no-op
+  window.io = function(){ return { on: function(){}, emit: function(){} }; };
+})();
+</script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
-    <title>Plugins — BEACON · Demo</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Plugins · Demo</title>
+    <!-- TODO: dodelat stranku s dokumentaci pluginu -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
 </head>
 <body>
 
-    <header>
-        <div class="brand">
-            <div class="brand-mark">◉</div>
-            <div class="brand-text">
-                <div class="brand-name">BEACON</div>
-                <div class="brand-sub">Plugins</div>
+<header>
+    <span class="brand-name">BEACON</span>
+    <nav class="topnav">
+        <a href="index.html">Dashboard</a>
+        <a href="terminal.html">Terminal</a>
+        <a href="discovery.html">Discovery</a>
+        <a href="alerts.html">Alerts</a>
+        <a href="plugins.html">Plugins</a>
+        <a href="widgets.html">Widgets</a>
+        <a href="settings.html">Settings</a>
+        <a href="login.html" class="button2 danger" style="text-decoration:none">Exit Demo</a>
+    </nav>
+</header>
+<main>
+    <div class="card">
+        <div class="section-title">Install Plugin</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="field-label">Plugin ZIP file</label>
+                <input type="file" id="pluginFile" accept=".zip">
+            </div>
+            <div class="form-group small">
+                <button class="button1" id="uploadBtn" style="width:100%">Upload &amp; Install</button>
             </div>
         </div>
-        <nav class="topnav">
-            <a href="index.html">Dashboard</a>
-            <a href="terminal.html">Terminal</a>
-            <a href="discovery.html">Discovery</a>
-            <a href="alerts.html">Alerts</a>
-            <a href="plugins.html">Plugins</a>
-            <a href="widgets.html">Widgets</a>
-            <a href="settings.html">Settings</a>
-            <span class="badge-demo" style="border-color:var(--accent);color:var(--accent)">Demo · no login</span>
-        </nav>
-    </header>
-    <main>
-        <div class="card">
-            <div class="section-title">Install Plugin</div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="field-label">Plugin ZIP file</label>
-                    <input type="file" id="pluginFile" accept=".zip">
-                </div>
-                <div class="form-group small">
-                    <button class="button1" id="uploadBtn" style="width:100%">Upload & Install</button>
-                </div>
-            </div>
-            <p id="uploadStatus" class="status-message"></p>
-        </div>
+        <p id="uploadStatus" class="status-message"></p>
+    </div>
 
-        <div class="card">
-            <div class="section-title">Installed Plugins</div>
-            <div id="pluginsList" class="mono muted" style="font-size:12px">Loading…</div>
-        </div>
+    <div class="card">
+        <div class="section-title">Installed Plugins</div>
+        <div id="pluginsList" class="mono muted" style="font-size:12px">Loading…</div>
+    </div>
 
-        <div class="card">
-            <div class="section-title">Plugin Development</div>
-            <div class="mono muted" style="font-size:11px;line-height:1.6;">
-                <p>Create a ZIP with:</p>
-                <ul style="margin-left:20px;margin-top:8px">
-                    <li><code>manifest.json</code> — plugin metadata</li>
-                    <li><code>check.js</code> — server-side check (optional)</li>
-                    <li><code>widget.js</code> — client-side widget (optional)</li>
-                </ul>
-                <p style="margin-top:14px;"><strong class="mono" style="color:var(--ink)">manifest.json example:</strong></p>
-                <pre style="background:#0e0f11;padding:10px;border:1px solid var(--line);font-size:11px;overflow-x:auto;margin-top:6px">{
+    <div class="card">
+        <div class="section-title">Plugin Development</div>
+        <div class="mono muted" style="font-size:11px;line-height:1.6;">
+            <p>Create a ZIP with:</p>
+            <ul style="margin-left:20px;margin-top:8px">
+                <li><code>manifest.json</code> — plugin metadata</li>
+                <li><code>check.js</code> — server-side check (optional)</li>
+                <li><code>widget.js</code> — client-side widget (optional)</li>
+            </ul>
+            <p style="margin-top:14px;"><strong style="color:var(--ink)">manifest.json example:</strong></p>
+            <pre style="background:#0e0f11;padding:10px;border:1px solid var(--line);font-size:11px;overflow-x:auto;margin-top:6px">{
   "id": "my-plugin",
   "name": "My Plugin",
   "version": "1.0.0",
@@ -67,123 +106,11 @@
     {"key": "apiUrl", "label": "API URL", "type": "string", "required": true}
   ]
 }</pre>
-                <p style="margin-top:10px;"><strong style="color:var(--ink)">check.js contract:</strong></p>
-                <pre style="background:#0e0f11;padding:10px;border:1px solid var(--line);font-size:11px;overflow-x:auto;margin-top:6px">module.exports.run = async (device, config) => {
-  return { alive: true, latencyMs: 10 };
-};</pre>
-            </div>
         </div>
-    </main>
+    </div>
+</main>
 
-    <script>
-        
-
-        document.getElementById('uploadBtn').addEventListener('click', async () => {
-            const fileInput = document.getElementById('pluginFile');
-            const status = document.getElementById('uploadStatus');
-            if (!fileInput.files.length) return alert('Select a ZIP file');
-
-            status.textContent = 'Uploading…';
-            status.style.color = 'var(--ink-dim)';
-            const arrayBuffer = await fileInput.files[0].arrayBuffer();
-
-            const res = await fetch('/api/plugins/upload', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/octet-stream' },
-                body: arrayBuffer,
-                credentials: 'include',
-            });
-            const data = await res.json();
-            if (res.ok) {
-                status.textContent = `Installed: ${data.id}${data.warnings.length ? ' (warnings: ' + data.warnings.join(', ') + ')' : ''}`;
-                status.style.color = 'var(--accent)';
-                loadPlugins();
-            } else {
-                status.textContent = `Error: ${data.error}`;
-                status.style.color = 'var(--danger)';
-            }
-        });
-
-        async function loadPlugins() {
-            const res = await fetch('/api/plugins', { credentials: 'include' });
-            const plugins = await res.json();
-            const div = document.getElementById('pluginsList');
-            if (!plugins.length) { div.textContent = 'No plugins installed.'; return; }
-            div.innerHTML = plugins.map((p) => `
-                <div style="padding:10px 0;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-                    <span style="color:var(--accent);font-weight:700;min-width:120px;">${p.name}</span>
-                    <span style="font-size:10px;color:var(--ink-dim);">v${p.version}</span>
-                    <span style="font-size:10px;" class="mono">[${p.type.join(', ')}]</span>
-                    <span style="font-size:10px;color:${p.enabled ? 'var(--accent)' : 'var(--ink-dim)'}" class="mono">${p.enabled ? 'ON' : 'OFF'}</span>
-                    <button class="button2" onclick="togglePlugin('${p.id}', ${p.enabled ? 0 : 1})">${p.enabled ? 'Disable' : 'Enable'}</button>
-                    <button class="button2 danger" onclick="deletePlugin('${p.id}')">Uninstall</button>
-                </div>
-            `).join('');
-        }
-
-        window.togglePlugin = async (id, enabled) => {
-            const endpoint = enabled ? 'enable' : 'disable';
-            await fetch(`/api/plugins/${id}/${endpoint}`, { method: 'POST', credentials: 'include' });
-            loadPlugins();
-        };
-
-        window.deletePlugin = async (id) => {
-            if (!confirm(`Uninstall plugin ${id}?`)) return;
-            const res = await fetch(`/api/plugins/${id}`, { method: 'DELETE', credentials: 'include' });
-            if (res.ok) loadPlugins();
-            else {
-                const data = await res.json();
-                alert(data.error || 'Failed');
-            }
-        };
-
-        loadPlugins();
-    </script>
-
-<script>
-// DEMO MODE — GitHub Pages, no backend, no password
-window.__DEMO__ = true;
-// mock fetch for /api/* /devices /ping /health etc — returns demo data
-(function(){
-  const DEMO_DEVICES_MOCK = [
-    { name: 'Main Router', ip: '192.168.1.1', type: 'router', live: { alive: true, latencyMs: 3 }, summary: { uptimePercent: 99.8, totalChecks: 1440 } },
-    { name: 'Office Switch', ip: '192.168.1.2', type: 'switch', live: { alive: true, latencyMs: 1 }, summary: { uptimePercent: 100, totalChecks: 1440 } },
-    { name: 'File Server', ip: '192.168.1.10', type: 'server', live: { alive: true, latencyMs: 12 }, summary: { uptimePercent: 99.5, totalChecks: 1440 } },
-    { name: 'NAS Storage', ip: '192.168.1.20', type: 'server', live: { alive: true, latencyMs: 8 }, summary: { uptimePercent: 98.9, totalChecks: 1440 } },
-    { name: 'IP Camera', ip: '192.168.1.50', type: 'camera', live: { alive: true, latencyMs: 22 }, summary: { uptimePercent: 97.2, totalChecks: 1440 } },
-    { name: 'Dev PC', ip: '192.168.1.100', type: 'pc', live: { alive: false, latencyMs: null }, summary: { uptimePercent: 85.3, totalChecks: 1440 } },
-    { name: 'Printer', ip: '192.168.1.200', type: 'printer', live: { alive: true, latencyMs: 45 }, summary: { uptimePercent: 99.1, totalChecks: 1440 } },
-    { name: 'Guest WiFi AP', ip: '192.168.1.5', type: 'router', live: { alive: true, latencyMs: 2 }, summary: { uptimePercent: 100, totalChecks: 1440 } },
-  ];
-  const origFetch = window.fetch.bind(window);
-  window.fetch = async (url, opts) => {
-    const u = String(url);
-    // health
-    if (u.includes('/health')) return new Response(JSON.stringify({ ok: true, service: 'beacon-demo' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    // dashboard summary
-    if (u.includes('/api/dashboard-summary')) return new Response(JSON.stringify(DEMO_DEVICES_MOCK), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    // devices
-    if (u.includes('/devices')) return new Response(JSON.stringify(DEMO_DEVICES_MOCK.map(d=>({id: Math.random(), name:d.name, ip:d.ip, type:d.type}))), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    // history / summary
-    if (u.includes('/history/') || u.includes('/summary/')) {
-      if (u.includes('/summary/')) return new Response(JSON.stringify({ uptimePercent: 99.2, avgLatencyMs: 8, lastStatus: 'online', totalChecks: 1440 }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      const rows = Array.from({length: 60}, (_,i)=>({ host: '192.168.1.1', timestamp: Date.now()-i*60000, alive: Math.random()>0.1?1:0, latency_ms: Math.floor(2+Math.random()*20) }));
-      return new Response(JSON.stringify(rows), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    }
-    // ping / check
-    if (u.includes('/ping') || u.includes('/check')) return new Response(JSON.stringify({ host: '127.0.0.1', alive: true, latencyMs: 12 }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    // auth
-    if (u.includes('/api/check-auth')) return new Response(JSON.stringify({ authenticated: true, totpEnabled: false }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    if (u.includes('/api/login') || u.includes('/api/logout') || u.includes('/api/settings') || u.includes('/api/alerts') || u.includes('/api/discovery') || u.includes('/api/snmp') || u.includes('/api/plugins')) {
-      return new Response(JSON.stringify({ ok: true, authenticated: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    }
-    // fallback: try real fetch, but if fails return mock empty
-    try { return await origFetch(url, opts); } catch { return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
-  };
-  // also mock socket.io if not loaded
-  if (typeof io === 'undefined') window.io = function(){ return { on: ()=>{}, emit: ()=>{} }; };
-})();
-</script>
-
+<script src="js/site.js"></script>
+<script src="js/plugins.js"></script>
 </body>
 </html>

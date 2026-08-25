@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="80" height="80" role="img" aria-label="Router icon">
-  <rect x="8" y="10" width="48" height="42" rx="8" fill="#2d2a28"/>
-  <rect x="14" y="16" width="36" height="30" rx="6" fill="#0C6291"/>
-  <circle cx="23" cy="31" r="5" fill="#1b1b1b"/>
-  <circle cx="32" cy="31" r="5" fill="#1b1b1b"/>
-  <circle cx="41" cy="31" r="5" fill="#1b1b1b"/>
-  <path d="M15 52h34" stroke="#0C6291" stroke-width="3" stroke-linecap="round"/>
-</svg>

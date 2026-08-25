@@ -5,187 +5,87 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
     <title>Add Device — BEACON</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
 </head>
 <body>
 
-    <header>
-        <div class="brand">
-            <div class="brand-mark">◉</div>
-            <div class="brand-text">
-                <div class="brand-name">BEACON</div>
-                <div class="brand-sub">Field Network Monitor</div>
+<header>
+    <span class="brand-name">BEACON</span>
+    <nav class="topnav">
+        <a href="index.html">Dashboard</a>
+        <a href="terminal.html">Terminal</a>
+        <a href="discovery.html">Discovery</a>
+        <a href="alerts.html">Alerts</a>
+        <a href="plugins.html">Plugins</a>
+        <a href="widgets.html">Widgets</a>
+        <a href="settings.html">Settings</a>
+        <button class="button2 danger" id="logoutBtn">Logout</button>
+    </nav>
+</header>
+<main>
+    <div class="card card-accent">
+        <div class="section-title">Add Device</div>
+        <div id="addDeviceForm">
+            <div class="form-group">
+                <label class="field-label" for="deviceName">Device Name</label>
+                <input type="text" id="deviceName" placeholder="core-router-01">
+            </div>
+            <div class="form-group">
+                <label class="field-label" for="deviceIP">IP / Hostname</label>
+                <input type="text" id="deviceIP" placeholder="192.168.1.1">
+            </div>
+            <div class="form-group small">
+                <label class="field-label" for="deviceType">Type</label>
+                <select id="deviceType">
+                    <option value="router">Router</option>
+                    <option value="switch">Switch</option>
+                    <option value="server">Server</option>
+                    <option value="camera">Camera</option>
+                    <option value="pc">PC</option>
+                    <option value="printer">Printer</option>
+                </select>
+            </div>
+            <div class="form-group small">
+                <label class="field-label" for="checkType">Check</label>
+                <select id="checkType">
+                    <option value="ping">Ping</option>
+                    <option value="http">HTTP(S)</option>
+                    <option value="tcp">TCP Port</option>
+                </select>
+            </div>
+            <div class="form-group small" id="portWrap" style="display:none">
+                <label class="field-label" for="devicePort">Port</label>
+                <input type="number" id="devicePort" placeholder="80" min="1" max="65535">
+            </div>
+            <div class="form-group small" id="pathWrap" style="display:none">
+                <label class="field-label" for="httpPath">Path</label>
+                <input type="text" id="httpPath" placeholder="/health">
+            </div>
+            <div class="form-group small" id="httpsWrap" style="display:none">
+                <label class="checkbox-label"><input type="checkbox" id="useHttps"> HTTPS</label>
+            </div>
+            <div class="form-group">
+                <label class="field-label" for="deviceNotes">Notes</label>
+                <input type="text" id="deviceNotes" placeholder="optional">
+            </div>
+            <div class="form-group" style="flex:0 1 100%">
+                <label class="checkbox-label"><input type="checkbox" id="snmpEnabled"> Enable SNMP monitoring</label>
+                <input type="text" id="snmpCommunity" placeholder="SNMP community (default: public)" style="display:none;margin-top:8px">
+            </div>
+            <div class="form-group small">
+                <button class="button2" id="pingIp" style="width:100%">Test Check</button>
             </div>
         </div>
-        <nav class="topnav">
-            <a href="index.html">Dashboard</a>
-            <a href="terminal.html">Terminal</a>
-            <a href="discovery.html">Discovery</a>
-            <a href="alerts.html">Alerts</a>
-            <a href="plugins.html">Plugins</a>
-            <a href="widgets.html">Widgets</a>
-            <a href="settings.html">Settings</a>
-            <button class="button2 danger" id="logoutBtn">Logout</button>
-        </nav>
-    </header>
-    <main>
-        <div class="card card-accent">
-            <div class="section-title">Add Device</div>
-            <div id="addDeviceForm">
-                <div class="form-group">
-                    <label class="field-label" for="deviceName">Device Name</label>
-                    <input type="text" id="deviceName" placeholder="core-router-01">
-                </div>
-                <div class="form-group">
-                    <label class="field-label" for="deviceIP">IP / Hostname</label>
-                    <input type="text" id="deviceIP" placeholder="192.168.1.1">
-                </div>
-                <div class="form-group small">
-                    <label class="field-label" for="deviceType">Type</label>
-                    <select id="deviceType">
-                        <option value="router">Router</option>
-                        <option value="switch">Switch</option>
-                        <option value="server">Server</option>
-                        <option value="camera">Camera</option>
-                        <option value="pc">PC</option>
-                        <option value="printer">Printer</option>
-                    </select>
-                </div>
-                <div class="form-group small">
-                    <label class="field-label" for="checkType">Check</label>
-                    <select id="checkType">
-                        <option value="ping">Ping</option>
-                        <option value="http">HTTP(S)</option>
-                        <option value="tcp">TCP Port</option>
-                    </select>
-                </div>
-                <div class="form-group small" id="portWrap" style="display:none">
-                    <label class="field-label" for="devicePort">Port</label>
-                    <input type="number" id="devicePort" placeholder="80" min="1" max="65535">
-                </div>
-                <div class="form-group small" id="pathWrap" style="display:none">
-                    <label class="field-label" for="httpPath">Path</label>
-                    <input type="text" id="httpPath" placeholder="/health">
-                </div>
-                <div class="form-group small" id="httpsWrap" style="display:none">
-                    <label class="checkbox-label" style="margin-top:22px"><input type="checkbox" id="useHttps"> HTTPS</label>
-                </div>
-                <div class="form-group">
-                    <label class="field-label" for="deviceNotes">Notes</label>
-                    <input type="text" id="deviceNotes" placeholder="rack A3 · optional">
-                </div>
-                <div class="form-group" style="flex:0 1 100%">
-                    <label class="checkbox-label"><input type="checkbox" id="snmpEnabled"> Enable SNMP monitoring</label>
-                    <input type="text" id="snmpCommunity" placeholder="SNMP community (default: public)" style="display:none;margin-top:8px">
-                </div>
-                <div class="form-group small">
-                    <button class="button2" id="pingIp" style="width:100%">Test Check</button>
-                </div>
-            </div>
-            <div style="display:flex;gap:12px;margin-top:16px;">
-                <button class="button2" onclick="location.href='index.html'">Back</button>
-                <button class="button1" id="addDeviceButton">Add Device</button>
-            </div>
-            <p id="statusMessage" class="status-message"></p>
+        <div style="display:flex;gap:12px;margin-top:16px;">
+            <button class="button2" onclick="location.href='index.html'">Back</button>
+            <button class="button1" id="addDeviceButton">Add Device</button>
         </div>
-    </main>
+        <p id="statusMessage" class="status-message"></p>
+    </div>
+</main>
 
-    <script>
-        document.getElementById('logoutBtn').addEventListener('click', () => { document.cookie = 'dashboard_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'; location.reload(); });
-
-        function setStatus(message, isError = false) {
-            const status = document.getElementById('statusMessage');
-            status.textContent = message;
-            status.style.color = isError ? 'var(--danger)' : 'var(--accent)';
-        }
-
-        const checkTypeSelect = document.getElementById('checkType');
-        const portWrap = document.getElementById('portWrap');
-        const pathWrap = document.getElementById('pathWrap');
-        const httpsWrap = document.getElementById('httpsWrap');
-        const portInput = document.getElementById('devicePort');
-        const httpPathInput = document.getElementById('httpPath');
-
-        checkTypeSelect.addEventListener('change', () => {
-            const type = checkTypeSelect.value;
-            portWrap.style.display = (type === 'http' || type === 'tcp') ? '' : 'none';
-            pathWrap.style.display = (type === 'http') ? '' : 'none';
-            httpsWrap.style.display = (type === 'http') ? '' : 'none';
-        });
-
-        const snmpEnabled = document.getElementById('snmpEnabled');
-        const snmpCommunity = document.getElementById('snmpCommunity');
-        snmpEnabled.addEventListener('change', () => {
-            snmpCommunity.style.display = snmpEnabled.checked ? '' : 'none';
-        });
-
-        function currentCheckConfig() {
-            return {
-                checkType: checkTypeSelect.value,
-                port: portInput.value ? Number(portInput.value) : undefined,
-                httpPath: httpPathInput.value || undefined,
-                https: document.getElementById('useHttps').checked
-            };
-        }
-
-        document.getElementById('pingIp').addEventListener('click', async function () {
-            const ip = document.getElementById('deviceIP').value.trim();
-            if (!ip) { setStatus('Zadejte IP adresu.', true); return; }
-
-            this.disabled = true;
-            this.textContent = 'Checking…';
-            setStatus('Kontroluji dostupnost…');
-
-            try {
-                const response = await fetch('/check', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ host: ip, timeout: 5000, ...currentCheckConfig() }),
-                    credentials: 'include'
-                });
-                const result = await response.json();
-                setStatus(result.alive
-                    ? `Zařízení ${ip} je online${result.latencyMs != null ? ' (' + result.latencyMs + ' ms)' : ''}.`
-                    : `Zařízení ${ip} není dostupné.${result.error ? ' (' + result.error + ')' : ''}`);
-            } catch (error) {
-                setStatus('Server error. Check if node app.js is running.', true);
-            } finally {
-                this.disabled = false;
-                this.textContent = 'Test Check';
-            }
-        });
-
-        document.getElementById('addDeviceButton').addEventListener('click', async function () {
-            const name = document.getElementById('deviceName').value.trim();
-            const ip = document.getElementById('deviceIP').value.trim();
-            const type = document.getElementById('deviceType').value;
-            const notes = document.getElementById('deviceNotes').value.trim();
-
-            if (!name || !ip) { setStatus('Zadejte jméno a IP adresu.', true); return; }
-
-            try {
-                const response = await fetch('/devices', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name, ip, type, notes,
-                        ...currentCheckConfig(),
-                        snmp_enabled: snmpEnabled.checked ? 1 : 0,
-                        snmp_community: snmpCommunity.value.trim() || 'public',
-                    }),
-                    credentials: 'include'
-                });
-                if (response.ok) {
-                    setStatus('Zařízení přidáno.');
-                    setTimeout(() => location.href = 'index.html', 500);
-                } else {
-                    const error = await response.json();
-                    setStatus(error.error || 'Chyba při přidávání zařízení.', true);
-                }
-            } catch (error) {
-                setStatus('Server error. Check if node app.js is running.', true);
-            }
-        });
-    </script>
+<script src="js/site.js"></script>
+<script src="js/add_device.js"></script>
 </body>
 </html>

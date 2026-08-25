@@ -5,166 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
     <title>Widgets — BEACON</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
 </head>
 <body>
 
-    <header>
-        <div class="brand">
-            <div class="brand-mark">◉</div>
-            <div class="brand-text">
-                <div class="brand-name">BEACON</div>
-                <div class="brand-sub">Widgets</div>
-            </div>
+<header>
+    <span class="brand-name">BEACON</span>
+    <nav class="topnav">
+        <a href="index.html">Dashboard</a>
+        <a href="terminal.html">Terminal</a>
+        <a href="discovery.html">Discovery</a>
+        <a href="alerts.html">Alerts</a>
+        <a href="plugins.html">Plugins</a>
+        <a href="widgets.html">Widgets</a>
+        <a href="settings.html">Settings</a>
+        <button class="button2 danger" id="logoutBtn">Logout</button>
+    </nav>
+</header>
+<main>
+    <div class="widget-grid">
+        <div class="card widget-stat">
+            <div id="widgetOnline" class="widget-stat-value">—</div>
+            <div class="widget-stat-label">Online</div>
         </div>
-        <nav class="topnav">
-            <a href="index.html">Dashboard</a>
-            <a href="terminal.html">Terminal</a>
-            <a href="discovery.html">Discovery</a>
-            <a href="alerts.html">Alerts</a>
-            <a href="plugins.html">Plugins</a>
-            <a href="widgets.html">Widgets</a>
-            <a href="settings.html">Settings</a>
-            <button class="button2 danger" id="logoutBtn">Logout</button>
-        </nav>
-    </header>
-    <main>
-        <div class="widget-grid">
-            <div class="card widget-stat">
-                <div id="widgetOnline" class="widget-stat-value">—</div>
-                <div class="widget-stat-label">Online</div>
-            </div>
-            <div class="card widget-stat">
-                <div id="widgetOffline" class="widget-stat-value" style="color:var(--danger)">—</div>
-                <div class="widget-stat-label">Offline</div>
-            </div>
-            <div class="card widget-stat">
-                <div id="widgetTotal" class="widget-stat-value" style="color:var(--ink)">—</div>
-                <div class="widget-stat-label">Total Devices</div>
-            </div>
-            <div class="card widget-stat">
-                <div id="widgetAvgUptime" class="widget-stat-value">—</div>
-                <div class="widget-stat-label">Avg Uptime</div>
-            </div>
+        <div class="card widget-stat">
+            <div id="widgetOffline" class="widget-stat-value">—</div>
+            <div class="widget-stat-label">Offline</div>
         </div>
-
-        <div class="card">
-            <div class="section-title">Plugin Widgets</div>
-            <div id="pluginWidgets" class="mono muted" style="font-size:12px">Loading…</div>
+        <div class="card widget-stat">
+            <div id="widgetTotal" class="widget-stat-value">—</div>
+            <div class="widget-stat-label">Total Devices</div>
         </div>
-
-        <div class="card">
-            <div class="section-title">Network Latency</div>
-            <canvas id="latencyChart" width="800" height="200" style="width:100%;"></canvas>
+        <div class="card widget-stat">
+            <div id="widgetAvgUptime" class="widget-stat-value">—</div>
+            <div class="widget-stat-label">Avg Uptime</div>
         </div>
-    </main>
+    </div>
 
-    <script>
-        document.getElementById('logoutBtn').addEventListener('click', () => { document.cookie = 'dashboard_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'; location.reload(); });
+    <div class="card">
+        <div class="section-title">Plugin Widgets</div>
+        <div id="pluginWidgets" class="mono muted" style="font-size:12px">Loading…</div>
+    </div>
 
-        async function updateSummary() {
-            const res = await fetch('/api/dashboard-summary', { credentials: 'include' });
-            const devices = await res.json();
-            const online = devices.filter((d) => d.live && d.live.alive).length;
-            const offline = devices.length - online;
-            const avgUptime = devices.length && devices.some((d) => d.summary && d.summary.totalChecks)
-                ? (devices.reduce((s, d) => s + (d.summary ? d.summary.uptimePercent || 0 : 0), 0) / devices.filter((d) => d.summary && d.summary.totalChecks).length || 0).toFixed(1)
-                : '—';
+    <div class="card">
+        <div class="section-title">Network Latency</div>
+        <canvas id="latencyChart" width="800" height="200" style="width:100%;"></canvas>
+    </div>
+</main>
 
-            document.getElementById('widgetOnline').textContent = online;
-            document.getElementById('widgetOffline').textContent = offline;
-            document.getElementById('widgetTotal').textContent = devices.length;
-            document.getElementById('widgetAvgUptime').textContent = avgUptime !== '—' ? avgUptime + '%' : '—';
-
-            drawLatencyChart(devices);
-        }
-
-        function drawLatencyChart(devices) {
-            const canvas = document.getElementById('latencyChart');
-            const ctx = canvas.getContext('2d');
-            const W = canvas.width, H = canvas.height;
-            const pad = { top: 20, bottom: 30, left: 50, right: 20 };
-
-            ctx.clearRect(0, 0, W, H);
-            if (!devices.length) return;
-
-            const onlineDevices = devices.filter((d) => d.live && d.live.alive && d.live.latencyMs != null);
-            if (!onlineDevices.length) {
-                ctx.fillStyle = '#c7b8c7';
-                ctx.font = '12px JetBrains Mono, monospace';
-                ctx.textAlign = 'center';
-                ctx.fillText('No latency data available', W / 2, H / 2);
-                return;
-            }
-
-            const barWidth = Math.min(40, (W - pad.left - pad.right) / onlineDevices.length - 4);
-            const maxLatency = Math.max(...onlineDevices.map((d) => d.live.latencyMs), 1);
-
-            ctx.strokeStyle = 'rgba(126,25,70,0.35)';
-            ctx.lineWidth = 0.5;
-            for (let i = 0; i <= 4; i++) {
-                const y = pad.top + (H - pad.top - pad.bottom) * (1 - i / 4);
-                ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
-                ctx.fillStyle = '#c7b8c7';
-                ctx.font = '10px JetBrains Mono, monospace';
-                ctx.textAlign = 'right';
-                ctx.fillText(Math.round(maxLatency * i / 4) + 'ms', pad.left - 5, y + 3);
-            }
-
-            onlineDevices.forEach((d, i) => {
-                const x = pad.left + i * (barWidth + 4) + 2;
-                const barH = (d.live.latencyMs / maxLatency) * (H - pad.top - pad.bottom);
-                const y = H - pad.bottom - barH;
-
-                ctx.fillStyle = d.live.latencyMs > 100 ? '#A63446' : '#0C6291';
-                ctx.fillRect(x, y, barWidth, barH);
-
-                ctx.save();
-                ctx.translate(x + barWidth / 2, H - pad.bottom + 5);
-                ctx.rotate(-Math.PI / 4);
-                ctx.fillStyle = '#c7b8c7';
-                ctx.font = '9px JetBrains Mono, monospace';
-                ctx.textAlign = 'right';
-                const label = d.name || d.ip;
-                ctx.fillText(label.length > 12 ? label.substring(0, 10) + '..' : label, 0, 0);
-                ctx.restore();
-            });
-        }
-
-        async function loadPluginWidgets() {
-            const res = await fetch('/api/plugins', { credentials: 'include' });
-            const plugins = await res.json();
-            const widgetPlugins = plugins.filter((p) => p.enabled && p.type.includes('widget'));
-            const div = document.getElementById('pluginWidgets');
-
-            if (!widgetPlugins.length) {
-                div.textContent = 'No widget plugins installed. Install a plugin with type "widget" to see widgets here.';
-                return;
-            }
-
-            div.innerHTML = '';
-            for (const p of widgetPlugins) {
-                const container = document.createElement('div');
-                container.style.border = '1px solid var(--line)';
-                container.style.marginBottom = '12px';
-                container.style.minHeight = '80px';
-                const label = document.createElement('div');
-                label.style.cssText = 'padding:8px;font-size:10px;color:var(--accent);font-family:JetBrains Mono, monospace;letter-spacing:.08em;text-transform:uppercase';
-                label.textContent = `${p.name} v${p.version}`;
-                container.appendChild(label);
-                div.appendChild(container);
-
-                try { WidgetHost.createWidgetFrame(p.id, container, null, {}); } catch {}
-            }
-        }
-
-        try {
-            const socket = io();
-            socket.on('device:update', () => { updateSummary(); });
-        } catch {}
-
-        updateSummary();
-        loadPluginWidgets();
-    </script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/site.js"></script>
+<script src="js/widgets.js"></script>
 </body>
 </html>

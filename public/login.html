@@ -4,112 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
-    <title>BEACON — Login</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Login — BEACON</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
 </head>
 <body>
 
+<!-- demo heslo je admin123 -->
 <div class="scene">
   <div class="login-shell">
-    <div class="login-brand">
-      <div class="login-mark">◉</div>
-      <div class="login-title">BEA<span>CON</span></div>
-      <div class="login-subtitle">Field Network Monitor · Secure Access</div>
-    </div>
+    <div class="login-title">BEACON</div>
 
     <div class="login-card">
-      <!-- Password login -->
       <form id="loginForm">
         <label class="field-label" for="loginPassword">Password</label>
-        <input class="field" id="loginPassword" placeholder="••••••••" type="password" required autofocus>
+        <input class="field" id="loginPassword" placeholder="********" type="password" required autofocus>
         <button type="submit" class="btn">Enter Beacon</button>
         <p id="loginStatus" class="status-message" style="text-align:center"></p>
       </form>
 
-      <!-- 2FA (hidden) -->
       <form id="tfaForm" style="display:none">
-        <p class="muted mono" style="font-size:11px;text-align:center;margin-bottom:12px">Zadejte kód z autentikátoru</p>
         <label class="field-label" for="tfaCode">2FA Code</label>
         <input class="field" id="tfaCode" placeholder="000000" type="text" maxlength="6" required autocomplete="one-time-code" inputmode="numeric">
-        <button type="submit" class="btn">Ověřit</button>
+        <button type="submit" class="btn">Verify</button>
         <p id="tfaStatus" class="status-message" style="text-align:center"></p>
       </form>
 
-      <div class="login-meta">000004 · FBFEF9 · 0C6291 · A63446 · 7E1946 · v1.1</div>
+      <div class="login-meta">Field Network Monitor · v1.1</div>
     </div>
 
     <div class="login-help">
-      <span class="mono" style="font-size:10px;opacity:.6">Demo password: admin123 · </span>
-      <a href="index.html" class="mono" style="font-size:10px">Continue as demo</a>
+      Demo password: admin123 · <a href="index.html">Continue as demo</a>
     </div>
   </div>
 </div>
 
-<script>
-    // Password login
-    document.getElementById('loginForm').addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const password = document.getElementById('loginPassword').value;
-        const statusEl = document.getElementById('loginStatus');
-        const btn = e.target.querySelector('button[type="submit"]');
-        statusEl.textContent = '';
-        btn.disabled = true;
-        btn.textContent = 'Checking…';
-
-        try {
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password }),
-                credentials: 'include',
-            });
-            const data = await response.json();
-
-            if (response.ok && data.ok) { location.href = 'index.html'; return; }
-            if (data.requires2fa) {
-                document.getElementById('loginForm').style.display = 'none';
-                document.getElementById('tfaForm').style.display = '';
-                document.getElementById('tfaCode').focus();
-                return;
-            }
-            statusEl.textContent = 'Nesprávné heslo.';
-            statusEl.style.color = 'var(--danger)';
-        } catch {
-            statusEl.textContent = 'Server neběží. Spusť: node app.js';
-            statusEl.style.color = 'var(--danger)';
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Enter Beacon';
-        }
-    });
-
-    // 2FA
-    document.getElementById('tfaForm').addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const code = document.getElementById('tfaCode').value.trim();
-        const statusEl = document.getElementById('tfaStatus');
-        const btn = e.target.querySelector('button[type="submit"]');
-        statusEl.textContent = '';
-        btn.disabled = true;
-
-        try {
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: document.getElementById('loginPassword').value, totpCode: code }),
-                credentials: 'include',
-            });
-            const data = await response.json();
-            if (response.ok && data.ok) { location.href = 'index.html'; return; }
-            statusEl.textContent = data.error || 'Nesprávný kód.';
-            statusEl.style.color = 'var(--danger)';
-        } catch {
-            statusEl.textContent = 'Chyba spojení.';
-            statusEl.style.color = 'var(--danger)';
-        } finally {
-            btn.disabled = false;
-        }
-    });
-</script>
+<script src="js/site.js"></script>
+<script src="js/login.js"></script>
 </body>
 </html>
