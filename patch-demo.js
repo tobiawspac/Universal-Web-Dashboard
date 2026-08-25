@@ -66,8 +66,7 @@ function demoLogin() {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
     <title>Login - BEACON</title>${demoShim}
-    <link rel="stylesheet" href="css/base.css">
-    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
