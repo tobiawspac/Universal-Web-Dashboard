@@ -1,37 +1,5 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="dark">
-    <title>Terminal — BEACON</title>
-</head>
-<body style="font-family: Comic Sans MS, cursive; background:#ffffff; color:#111111;">
-
-<header>
-    <span class="brand-name">BEACON</span>
-    <nav class="topnav">
-        <a href="index.html">Dashboard</a>
-        <a href="terminal.html">Terminal</a>
-        <a href="discovery.html">Discovery</a>
-        <a href="alerts.html">Alerts</a>
-        <a href="plugins.html">Plugins</a>
-        <a href="widgets.html">Widgets</a>
-        <a href="settings.html">Settings</a>
-        <button class="button2 danger" id="logoutBtn">Logout</button>
-    </nav>
-</header>
-<main>
-    <div class="card">
-        <div class="section-title">Beacon Terminal</div>
-        <div class="terminal-container">
-            <div id="terminal"></div>
-            <input type="text" id="commandInput" placeholder="Enter command (ping &lt;ip&gt;, help)" autofocus>
-        </div>
-    </div>
-</main>
-
-<script src="js/site.js"></script>
-<script src="js/terminal.js"></script>
-</body>
-</html>
+<!DOCTYPE html><html lang="cs"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="color-scheme" content="dark"><title>BEACON</title><link rel="stylesheet" href="css/style.css"></head><body>
+<header><span class="brand-name">BEACON</span>
+<nav class="topnav"><a href="index.html">Dashboard</a><a href="terminal.html">Terminal</a><a href="discovery.html">Discovery</a><a href="alerts.html">Alerts</a><a href="plugins.html">Plugins</a><a href="widgets.html">Widgets</a><a href="settings.html">Settings</a><button class="button2 danger" id="logoutBtn">Logout</button></nav></header>
+<main><div class="card"><div id="terminal"></div><input type="text" id="commandInput" placeholder="ping <ip>, help" autofocus></div></main>
+<script src="js/site.js"></script><script src="js/terminal.js"></script></body></html>

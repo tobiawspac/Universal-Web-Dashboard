@@ -1,43 +1,14 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="dark">
-    <title>Dashboard - BEACON</title>
-</head>
-<body style="font-family: Comic Sans MS, cursive; background:#ffffff; color:#111111;">
-
-<header>
-    <span class="brand-name">BEACON</span>
-    <nav class="topnav">
-        <a href="index.html">Dashboard</a>
-        <a href="terminal.html">Terminal</a>
-        <a href="discovery.html">Discovery</a>
-        <a href="alerts.html">Alerts</a>
-        <a href="plugins.html">Plugins</a>
-        <a href="widgets.html">Widgets</a>
-        <a href="settings.html">Settings</a>
-        <button class="button2 danger" id="logoutBtn">Logout</button>
-    </nav>
-</header>
-<main>
-    <div class="dashboard-toolbar">
-        <div class="summary-pill" id="summaryOnline"><span class="status-dot"></span>Online: —</div>
-        <div class="summary-pill" id="summaryOffline">Offline: —</div>
-        <div style="flex:1;min-width:160px;max-width:320px">
-            <input type="text" id="q" placeholder="Search name / IP…" style="margin:0;padding:8px 10px;font-size:11px">
-        </div>
-        <button class="button1" onclick="location.href='add_device.html'">+ Add device</button>
-        <button class="button2" id="refreshBtn">Refresh</button>
-        <button class="button2" id="exportBtn" title="Export devices JSON">Export</button>
-    </div>
-    <div id="devices" class="device-grid"></div>
-    <p id="emptyState" class="empty-state" style="display:none">No devices yet. Add one to get started or <a href="add_device.html">add device</a> · <a href="#" id="demoLink">show demo</a></p>
-</main>
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="js/site.js"></script>
-<script src="js/index.js"></script>
-</body>
-</html>
+<!DOCTYPE html><html lang="cs"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="color-scheme" content="dark"><title>BEACON</title><link rel="stylesheet" href="css/style.css"></head><body>
+<header><span class="brand-name">BEACON</span>
+<nav class="topnav"><a href="index.html">Dashboard</a><a href="terminal.html">Terminal</a><a href="discovery.html">Discovery</a><a href="alerts.html">Alerts</a><a href="plugins.html">Plugins</a><a href="widgets.html">Widgets</a><a href="settings.html">Settings</a><button class="button2 danger" id="logoutBtn">Logout</button></nav></header>
+<main><div class="dashboard-toolbar">
+<div class="summary-pill" id="summaryOnline"><span class="status-dot"></span>Online: —</div>
+<div class="summary-pill" id="summaryOffline">Offline: —</div>
+<div style="flex:1;min-width:160px;max-width:320px"><input type="text" id="q" placeholder="Search…" style="margin:0;padding:8px 10px;font-size:11px"></div>
+<button class="button1" onclick="location.href='add_device.html'">+ Add</button>
+<button class="button2" id="refreshBtn">Refresh</button>
+<button class="button2" id="exportBtn">Export</button>
+</div>
+<div id="devices" class="device-grid"></div>
+<p id="emptyState" class="empty-state" style="display:none">No devices. <a href="add_device.html">Add one</a> · <a href="#" id="demoLink">demo</a></p></main>
+<script src="/socket.io/socket.io.js"></script><script src="js/site.js"></script><script src="js/index.js"></script></body></html>

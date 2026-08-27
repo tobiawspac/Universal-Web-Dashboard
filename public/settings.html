@@ -1,80 +1,14 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="dark">
-    <title>Settings — BEACON</title>
-</head>
-<body style="font-family: Comic Sans MS, cursive; background:#ffffff; color:#111111;">
-
-<header>
-    <span class="brand-name">BEACON</span>
-    <nav class="topnav">
-        <a href="index.html">Dashboard</a>
-        <a href="terminal.html">Terminal</a>
-        <a href="discovery.html">Discovery</a>
-        <a href="alerts.html">Alerts</a>
-        <a href="plugins.html">Plugins</a>
-        <a href="widgets.html">Widgets</a>
-        <a href="settings.html">Settings</a>
-        <button class="button2 danger" id="logoutBtn">Logout</button>
-    </nav>
-</header>
+<!DOCTYPE html><html lang="cs"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="color-scheme" content="dark"><title>BEACON</title><link rel="stylesheet" href="css/style.css"></head><body>
+<header><span class="brand-name">BEACON</span>
+<nav class="topnav"><a href="index.html">Dashboard</a><a href="terminal.html">Terminal</a><a href="discovery.html">Discovery</a><a href="alerts.html">Alerts</a><a href="plugins.html">Plugins</a><a href="widgets.html">Widgets</a><a href="settings.html">Settings</a><button class="button2 danger" id="logoutBtn">Logout</button></nav></header>
 <main>
-    <div class="card">
-        <div class="section-title">Change Password</div>
-        <div style="max-width:400px;">
-            <label class="field-label" for="currentPassword">Current Password</label>
-            <input type="password" id="currentPassword">
-            <label class="field-label" for="newPassword">New Password</label>
-            <input type="password" id="newPassword">
-            <label class="field-label" for="confirmPassword">Confirm New Password</label>
-            <input type="password" id="confirmPassword">
-            <button class="button1" id="changePasswordBtn" style="margin-top:8px">Change Password</button>
-            <p id="passwordStatus" class="status-message"></p>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="section-title">Two-Factor Authentication (2FA)</div>
-        <div id="2faStatus" style="margin-bottom:12px;" class="mono muted"></div>
-        <div id="2faSetup" style="display:none;">
-            <p class="muted" style="font-size:12px;margin-bottom:12px;">
-                Scan this QR code with your authenticator app:
-            </p>
-            <img id="qrCode" style="border:1px solid var(--line);background:white;padding:8px;max-width:180px">
-            <p style="font-size:11px;color:var(--ink-dim);margin-bottom:8px;margin-top:8px;" class="mono">
-                Or enter this code manually: <code id="manualCode" style="background:#1f1f1f;padding:2px 6px;border:1px solid var(--line)"></code>
-            </p>
-            <label class="field-label">Enter 6-digit code to verify</label>
-            <div style="display:flex;gap:8px;margin-top:4px;">
-                <input type="text" id="totpCode" placeholder="000000" maxlength="6" style="width:140px;">
-                <button class="button1" id="verify2faBtn">Verify &amp; Enable</button>
-            </div>
-            <p id="2faStatus2" class="status-message"></p>
-        </div>
-        <button class="button2 danger" id="disable2faBtn" style="display:none;">Disable 2FA</button>
-    </div>
-
-    <div class="card">
-        <div class="section-title">Active Sessions</div>
-        <!-- tlacitko na refresh session -->
-        <button class="button2" id="refreshSessions">Refresh</button>
-        <div id="sessionsList" class="mono" style="color:var(--dim);font-size:12px;margin-top:10px;">Loading…</div>
-    </div>
-
-    <div class="card">
-        <div class="section-title">System Info</div>
-        <div class="mono" style="color:var(--ink-dim);font-size:11px;line-height:1.9;">
-            <div>SYSTEM — BEACON Field Monitor v1.1</div>
-            <div>Database: SQLite (devices.db)</div>
-            <div>Ping Interval: 60s</div>
-        </div>
-    </div>
+<div class="card" style="max-width:400px"><input type="password" id="currentPassword" placeholder="Current password"><input type="password" id="newPassword" placeholder="New password"><input type="password" id="confirmPassword" placeholder="Confirm"><button class="button1" id="changePasswordBtn">Change</button><p id="passwordStatus" class="status-message"></p></div>
+<div class="card"><div id="2faStatus" style="margin-bottom:12px" class="mono muted"></div>
+<div id="2faSetup" style="display:none"><img id="qrCode" style="border:1px solid var(--line);background:white;padding:8px;max-width:180px">
+<p class="mono" style="font-size:11px;margin:8px 0"><code id="manualCode" style="background:var(--bg);padding:2px 6px;border:1px solid var(--line)"></code></p>
+<div style="display:flex;gap:8px;margin-top:4px"><input type="text" id="totpCode" placeholder="000000" maxlength="6" style="width:140px"><button class="button1" id="verify2faBtn">Verify</button></div>
+<p id="2faStatus2" class="status-message"></p></div>
+<button class="button2 danger" id="disable2faBtn" style="display:none">Disable 2FA</button></div>
+<div class="card"><button class="button2" id="refreshSessions">Refresh</button><div id="sessionsList" class="mono" style="color:var(--dim);font-size:12px;margin-top:10px">Loading…</div></div>
 </main>
-
-<script src="js/site.js"></script>
-<script src="js/settings.js"></script>
-</body>
-</html>
+<script src="js/site.js"></script><script src="js/settings.js"></script></body></html>

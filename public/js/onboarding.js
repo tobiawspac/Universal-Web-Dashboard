@@ -1,104 +1,22 @@
-// onboarding 4 kroky
-function qwertyu() {
-
-var krok = 1
-
-// prepnuti kroku (musi byt globalni kvuli onclick)
-window.goStep = function(n) {
-    console.log("krok " + n)
-
-    var steps = document.querySelectorAll(".onboard-step")
-    for (var i = 0; i < steps.length; i++) steps[i].classList.remove("active")
-    var dots = document.querySelectorAll(".step-dot")
-    for (var j = 0; j < dots.length; j++) dots[j].classList.remove("active")
-
-    // predchozi kroky oznac jako hotove
-    for (var k = 1; k < n; k++) {
-        document.getElementById("dot" + k).classList.add("done")
-    }
-
-    document.getElementById("step" + n).classList.add("active")
-    document.getElementById("dot" + n).classList.add("active")
-    krok = n
-}
-
-// krok 2 - nastavit heslo
-document.getElementById("onboardSetPass").addEventListener("click", function() {
-    var pw1 = document.getElementById("onboardPassword").value
-    var pw2 = document.getElementById("onboardPasswordConfirm").value
-    var st = document.getElementById("onboardPassStatus")
-
-    if (pw1.length < 4) {
-        st.textContent = "Password must be at least 4 characters."
-        return
-    }
-    if (pw1 != pw2) {
-        st.textContent = "Passwords do not match."
-        return
-    }
-
-    fetch("/api/settings/password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword: "admin123", newPassword: pw1 }),
-        credentials: "include",
-    })
-    .then(function(r){ return r.json() })
-    .then(function(odp) {
-        if (!odp.error) {
-            st.textContent = "Password set!"
-            setTimeout(function(){ window.goStep(3) }, 800)
-        } else {
-            st.textContent = odp.error || "Failed"
-        }
-    })
-});
-
-// test spojeni v kroku 3
-document.getElementById("onboardTestDevice").addEventListener("click", function() {
-    var ip = document.getElementById("onboardDeviceIP").value.trim()
-    if (!ip) {
-        alert("Enter an IP address")
-        return
-    }
-    var st = document.getElementById("onboardTestResult")
-    st.textContent = "Testing..."
-
-    fetch("/ping", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ host: ip, timeout: 3000 }),
-        credentials: "include",
-    })
-    .then(function(r){ return r.json() })
-    .then(function(v) {
-        if (v.alive) st.textContent = "Online (" + v.latencyMs + "ms)"
-        else st.textContent = "Offline or unreachable"
-    })
-});
-
-document.getElementById("onboardAddDevice").addEventListener("click", function() {
-    var jmeno = document.getElementById("onboardDeviceName").value.trim()
-    var ip = document.getElementById("onboardDeviceIP").value.trim()
-    var typ = document.getElementById("onboardDeviceType").value
-
-    if (!jmeno || !ip) {
-        alert("Enter name and IP")
-        return
-    }
-
-    fetch("/devices", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: jmeno, ip: ip, type: typ }),
-        credentials: "include",
-    })
-    .then(function(r) {
-        if (r.ok) window.goStep(4)
-        else alert("Failed to add device")
-    })
-});
-
-}
-
-qwertyu()
+(function(){
+window.goStep=function(s){for(var i=1;i<=4;i++){document.getElementById('step'+i).style.display='none';document.getElementById('step'+i).classList.remove('active');document.getElementById('dot'+i).classList.remove('active');}
+document.getElementById('step'+s).style.display='';document.getElementById('step'+s).classList.add('active');document.getElementById('dot'+s).classList.add('active');};
+document.getElementById('onboardSetPass').onclick=function(){
+var p1=document.getElementById('onboardPassword').value,p2=document.getElementById('onboardPasswordConfirm').value,st=document.getElementById('onboardPassStatus');
+if(!p1||!p2){st.textContent='Fill both';st.style.color='#f87171';return;}
+if(p1!==p2){st.textContent="No match";st.style.color='#f87171';return;}
+fetch('/api/settings/password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({currentPassword:'',newPassword:p1}),credentials:'include'})
+.then(function(r){return r.json();}).then(function(r){if(r.ok)goStep(3);else{st.textContent=r.error||'Err';st.style.color='#f87171';}})
+.catch(function(){st.textContent='Error';st.style.color='#f87171';});};
+document.getElementById('onboardTestDevice').onclick=function(){
+var ip=document.getElementById('onboardDeviceIP').value.trim();if(!ip){alert('IP?');return;}
+fetch('/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({host:ip,timeout:5000}),credentials:'include'})
+.then(function(r){return r.json();}).then(function(r){var el=document.getElementById('onboardTestResult');
+if(r.alive){el.textContent='Online ('+r.latencyMs+' ms)';el.style.color='#4ade80';}else{el.textContent='Down';el.style.color='#f87171';}
+}).catch(function(){document.getElementById('onboardTestResult').textContent='Err';});};
+document.getElementById('onboardAddDevice').onclick=function(){
+var n=document.getElementById('onboardDeviceName').value.trim(),ip=document.getElementById('onboardDeviceIP').value.trim(),t=document.getElementById('onboardDeviceType').value;
+if(!n||!ip){alert('Name + IP');return;}
+fetch('/devices',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,ip:ip,type:t}),credentials:'include'})
+.then(function(){goStep(4);}).catch(function(){alert('Error');});};
+})();

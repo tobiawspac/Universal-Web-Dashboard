@@ -1,230 +1,47 @@
-// alerty - kanaly, log, maintenance
-function mnbvlk() {
-
-var pole = {
-    webhook: [ { key: "url", label: "Webhook URL", ph: "https://..." } ],
-    discord: [ { key: "webhookUrl", label: "Discord Webhook URL", ph: "https://discord.com/api/webhooks/..." } ],
-    telegram: [
-        { key: "botToken", label: "Bot Token", ph: "123456:ABC..." },
-        { key: "chatId", label: "Chat ID", ph: "-100..." }
-    ],
-    email: [
-        { key: "smtp_host", label: "SMTP Host", ph: "smtp.gmail.com" },
-        { key: "smtp_port", label: "SMTP Port", ph: "587", val: "587" },
-        { key: "smtp_user", label: "SMTP User", ph: "user@gmail.com" },
-        { key: "smtp_pass", label: "SMTP Password", ph: "****", typ: "password" },
-        { key: "to", label: "To Email", ph: "admin@example.com" }
-    ]
+(function(){
+function load(){
+fetch('/api/alerts',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){
+var el=document.getElementById('channelsList');
+if(!d.length){el.textContent='No channels.';return;}
+var h='';for(var i=0;i<d.length;i++)h+='<div class="card" style="margin-bottom:8px;padding:10px;font-size:12px"><strong>'+(d[i].name||'?')+'</strong> ('+(d[i].type||'?')+') <button class="button2 danger" onclick="rm('+d[i].id+')">X</button></div>';
+el.innerHTML=h;
+}).catch(function(){});
 }
-
-var selTyp = document.getElementById("channelType")
-var divPole = document.getElementById("channelFields")
-
-// prekresli inputy podle vybraneho typu
-function KresliPole() {
-    var f = pole[selTyp.value]
-    if (!f) f = []
-    var h = ""
-    for (var i = 0; i < f.length; i++) {
-        h += '<div style="flex:1;min-width:140px;">'
-        h += "<label>" + f[i].label + "</label>"
-        h += '<input type="' + (f[i].typ || "text") + '" data-key="' + f[i].key + '" placeholder="' + (f[i].ph || "") + '" value="' + (f[i].val || "") + '">'
-        h += "</div>"
-    }
-    divPole.innerHTML = h
+window.rm=function(id){if(!confirm('Del?'))return;fetch('/api/alerts/'+id,{method:'DELETE',credentials:'include'}).then(load).catch(function(){});};
+document.getElementById('addChannelBtn').onclick=function(){
+var t=document.getElementById('channelType').value,n=document.getElementById('channelName').value.trim();
+if(!n){alert('Name?');return;}
+var b={type:t,name:n,config:{}};
+if(t==='webhook'||t==='discord')b.config.url=prompt('URL:')||'';
+if(t==='telegram'){b.config.token=prompt('Token:')||'';b.config.chatId=prompt('ChatID:')||'';}
+if(t==='email'){b.config.smtpHost=prompt('SMTP host:')||'';b.config.smtpPort=Number(prompt('Port:')||'587');b.config.smtpUser=prompt('User:')||'';b.config.smtpPass=prompt('Pass:')||'';b.config.to=prompt('To:')||'';}
+fetch('/api/alerts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b),credentials:'include'}).then(function(){load();document.getElementById('channelName').value='';}).catch(function(){});
+};
+function hist(){
+fetch('/api/alerts/history',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){
+var el=document.getElementById('alertLog');
+if(!d.length){el.textContent='No alerts.';return;}
+var h='';for(var i=0;i<d.length;i++)h+='<div style="margin-bottom:4px;font-size:11px"><span style="color:var(--dim)">'+(d[i].timestamp||'')+'</span> <span style="color:'+(d[i].type==='down'?'var(--err)':'var(--acc)')+'">'+(d[i].device_name||'?')+' '+(d[i].type||'?')+'</span></div>';
+el.innerHTML=h;
+}).catch(function(){});
 }
-
-selTyp.addEventListener("change", KresliPole)
-KresliPole()
-
-document.getElementById("addChannelBtn").addEventListener("click", function() {
-    var jmeno = document.getElementById("channelName").value.trim()
-    if (jmeno == "") {
-        alert("Enter a channel name")
-        return
-    }
-
-    // posbirat hodnoty z inputu
-    var cfg = {}
-    var inputs = divPole.querySelectorAll("input")
-    for (var i = 0; i < inputs.length; i++) {
-        var klic = inputs[i].dataset.key
-        var hodn = inputs[i].value.trim()
-        if (klic == "smtp_port") hodn = Number(hodn) || 587   // default port
-        cfg[klic] = hodn
-    }
-
-    fetch("/api/alerts/channels", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: selTyp.value, name: jmeno, config: cfg }),
-        credentials: "include",
-    })
-    .then(function(r) {
-        if (r.ok) {
-            document.getElementById("channelName").value = ""
-            KresliPole()
-            NactiKanaly()
-        } else {
-            r.json().then(function(e){ alert(e.error || "Failed") })
-        }
-    })
-});
-
-function NactiKanaly() {
-    fetch("/api/alerts/channels", { credentials: "include" })
-        .then(function(r){ return r.json() })
-        .then(function(kanaly) {
-            var div = document.getElementById("channelsList")
-            if (kanaly.length == 0) {
-                div.textContent = "No channels configured."
-                return
-            }
-            var h = ""
-            for (var i = 0; i < kanaly.length; i++) {
-                var k = kanaly[i]
-                var onoff = k.enabled ? "ON" : "OFF"
-                h += '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);">'
-                h += '<span style="font-weight:bold;min-width:80px;" class="mono">' + k.type + "</span>"
-                h += "<span style='flex:1;'>" + k.name + "</span>"
-                h += '<span style="font-size:10px;" class="mono">' + onoff + "</span>"
-                h += '<button class="button2" onclick="testChannel(' + k.id + ')">Test</button>'
-                // enable / disable
-                if (k.enabled) h += '<button class="button2" onclick="toggleChannel(' + k.id + ', 0)">Disable</button>'
-                else h += '<button class="button2" onclick="toggleChannel(' + k.id + ', 1)">Enable</button>'
-                h += '<button class="button2 danger" onclick="deleteChannel(' + k.id + ')">Delete</button>'
-                h += "</div>"
-            }
-            div.innerHTML = h
-        })
+function maint(){
+fetch('/api/maintenance',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){
+var el=document.getElementById('maintList');
+if(!d.length){el.textContent='No windows.';return;}
+var h='';for(var i=0;i<d.length;i++)h+='<div style="margin-bottom:6px;padding:8px;font-size:12px"><strong>'+(d[i].device_name||'?')+'</strong> '+d[i].start+'-'+d[i].end+' <button class="button2 danger" onclick="rmM('+d[i].id+')">X</button></div>';
+el.innerHTML=h;
+}).catch(function(){});
 }
-
-window.testChannel = function(id) {
-    fetch("/api/alerts/channels/" + id + "/test", { method: "POST", credentials: "include" })
-        .then(function(r){ return r.json() })
-        .then(function(odp) {
-            if (odp.success) alert("Test sent!")
-            else alert("Failed: " + odp.error)
-        })
-}
-
-window.toggleChannel = function(id, en) {
-    fetch("/api/alerts/channels/" + id, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled: en }),
-        credentials: "include",
-    }).then(function(){ NactiKanaly() })
-}
-
-window.deleteChannel = function(id) {
-    if (!confirm("Delete this channel?")) return
-    fetch("/api/alerts/channels/" + id, { method: "DELETE", credentials: "include" })
-        .then(function(){ NactiKanaly() })
-}
-
-// historie odeslanych alertu
-function NactiLog() {
-    fetch("/api/alerts/log?limit=50", { credentials: "include" })
-        .then(function(r){ return r.json() })
-        .then(function(radky) {
-            var div = document.getElementById("alertLog")
-            if (radky.length == 0) {
-                div.textContent = "No alerts yet."
-                return
-            }
-            var h = ""
-            for (var i = 0; i < radky.length; i++) {
-                var r = radky[i]
-                var cas = new Date(r.sent_at).toLocaleString("cs")
-                h += '<div style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;">'
-                h += '<span style="font-weight:bold;min-width:80px;">' + r.event_type + "</span>"
-                h += "<span style='flex:1;'>" + (r.device_name || "?") + " — " + r.message + "</span>"
-                h += '<span style="font-size:10px;color:var(--dim);">' + cas + "</span>"
-                if (r.suppressed) h += '<span style="font-size:10px;color:var(--dim);">[suppressed]</span>'
-                if (r.success === 0) h += '<span style="font-size:10px;">[failed]</span>'
-                h += "</div>"
-            }
-            div.innerHTML = h
-        })
-}
-
-// naplneni selectu zarizenimi pro maintenance
-function NactiZarizeni() {
-    fetch("/devices", { credentials: "include" })
-        .then(function(r){ return r.json() })
-        .then(function(devs) {
-            var sel = document.getElementById("maintDevice")
-            var h = ""
-            for (var i = 0; i < devs.length; i++) {
-                h += '<option value="' + devs[i].id + '">' + devs[i].name + " (" + devs[i].ip + ")</option>"
-            }
-            sel.innerHTML = h
-        })
-}
-
-document.getElementById("addMaintBtn").addEventListener("click", function() {
-    var did = parseInt(document.getElementById("maintDevice").value)
-    if (!did) {
-        alert("Select a device")
-        return
-    }
-    var od = new Date(document.getElementById("maintStart").value).getTime()
-    var doo = new Date(document.getElementById("maintEnd").value).getTime()
-    var poznamka = document.getElementById("maintNote").value.trim()
-
-    if (!od || !doo || od >= doo) {
-        alert("Set valid start/end times")
-        return
-    }
-
-    fetch("/api/maintenance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deviceId: did, startsAt: od, endsAt: doo, note: poznamka }),
-        credentials: "include",
-    })
-    .then(function(r) {
-        if (r.ok) NactiMaint()
-        else alert("Failed")
-    })
-});
-
-function NactiMaint() {
-    fetch("/api/maintenance", { credentials: "include" })
-        .then(function(r){ return r.json() })
-        .then(function(radky) {
-            var div = document.getElementById("maintList")
-            if (radky.length == 0) {
-                div.textContent = "No maintenance windows."
-                return
-            }
-            var h = ""
-            for (var i = 0; i < radky.length; i++) {
-                var r = radky[i]
-                var od = new Date(r.starts_at).toLocaleString("cs")
-                var doo = new Date(r.ends_at).toLocaleString("cs")
-                var jmeno = r.device_name || "Device #" + r.device_id
-                h += '<div style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;">'
-                h += "<span style='flex:1;'>" + jmeno + "</span>"
-                h += '<span style="font-size:10px;color:var(--dim);">' + od + " — " + doo + "</span>"
-                if (r.note) h += '<span style="font-size:10px;color:var(--dim);">(' + r.note + ")</span>"
-                h += '<button class="button2 danger" onclick="deleteMaint(' + r.id + ')">Delete</button>'
-                h += "</div>"
-            }
-            div.innerHTML = h
-        })
-}
-
-window.deleteMaint = function(id) {
-    fetch("/api/maintenance/" + id, { method: "DELETE", credentials: "include" })
-        .then(function(){ NactiMaint() })
-}
-
-NactiKanaly()
-NactiLog()
-NactiZarizeni()
-NactiMaint()
-}
-
-mnbvlk()
+window.rmM=function(id){fetch('/api/maintenance/'+id,{method:'DELETE',credentials:'include'}).then(maint).catch(function(){});};
+document.getElementById('addMaintBtn').onclick=function(){
+var dv=document.getElementById('maintDevice').value,s=document.getElementById('maintStart').value,e=document.getElementById('maintEnd').value,n=document.getElementById('maintNote').value.trim();
+if(!dv||!s||!e){alert('Fill');return;}
+fetch('/api/maintenance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_id:dv,start:s,end:e,note:n}),credentials:'include'}).then(maint).catch(function(){});
+};
+fetch('/devices',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){
+var s=document.getElementById('maintDevice');
+for(var i=0;i<d.length;i++){var o=document.createElement('option');o.value=d[i].id;o.textContent=d[i].name;s.appendChild(o);}
+}).catch(function(){});
+load();hist();maint();
+})();

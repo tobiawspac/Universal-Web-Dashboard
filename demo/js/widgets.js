@@ -1,145 +1,36 @@
-// widgety + graf latenci
-function lkjhgf() {
-
-function Nacti() {
-    fetch("/api/dashboard-summary", { credentials: "include" })
-        .then(function(r){ return r.json() })
-        .then(function(devs) {
-            // spocitej online / offline
-            var onCnt = 0
-            for (var i = 0; i < devs.length; i++) {
-                if (devs[i].live && devs[i].live.alive) onCnt++
-            }
-            var offCnt = devs.length - onCnt
-
-            // prumer uptime jen od tech co maji checky
-            var suma = 0, cnt = 0
-            for (var j = 0; j < devs.length; j++) {
-                var s = devs[j].summary
-                if (s && s.totalChecks) {
-                    suma += (s.uptimePercent || 0)
-                    cnt++
-                }
-            }
-            var prumer = "—"
-            if (cnt > 0) prumer = (suma / cnt).toFixed(1) + "%"
-
-            document.getElementById("widgetOnline").textContent = onCnt
-            document.getElementById("widgetOffline").textContent = offCnt
-            document.getElementById("widgetTotal").textContent = devs.length
-            document.getElementById("widgetAvgUptime").textContent = prumer
-
-            Graf(devs)
-        })
+(function(){
+function stats(){
+fetch('/api/dashboard-summary',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){
+var on=0,off=0,tu=0;
+for(var i=0;i<d.length;i++){if(d[i].live&&d[i].live.alive)on++;else off++;if(d[i].summary&&d[i].summary.uptimePercent)tu+=d[i].summary.uptimePercent;}
+document.getElementById('widgetOnline').textContent=on;
+document.getElementById('widgetOffline').textContent=off;
+document.getElementById('widgetTotal').textContent=d.length;
+document.getElementById('widgetAvgUptime').textContent=(d.length?(tu/d.length).toFixed(1):'0')+'%';
+}).catch(function(){});
 }
-
-// sloupcovy graf latence na canvasu
-function Graf(devs) {
-    var cnv = document.getElementById("latencyChart")
-    var ctx = cnv.getContext("2d")
-    var W = cnv.width, H = cnv.height
-    var pT = 20, pB = 30, pL = 50, pR = 20
-
-    ctx.clearRect(0, 0, W, H)
-    if (devs.length == 0) return
-
-    // jen online s latenci
-    var online = []
-    for (var i = 0; i < devs.length; i++) {
-        var d = devs[i]
-        if (d.live && d.live.alive && d.live.latencyMs != null) online.push(d)
-    }
-
-    if (online.length == 0) {
-        ctx.fillStyle = "#A9A496"
-        ctx.font = "12px monospace"
-        ctx.textAlign = "center"
-        ctx.fillText("No latency data available", W / 2, H / 2)
-        return
-    }
-
-    // max latence pro meritko
-    var lMax = 1
-    for (var k = 0; k < online.length; k++) {
-        if (online[k].live.latencyMs > lMax) lMax = online[k].live.latencyMs
-    }
-    var sirka = Math.min(40, (W - pL - pR) / online.length - 4)
-
-    // mrizka + popisky
-    for (var g = 0; g <= 4; g++) {
-        var yy = pT + (H - pT - pB) * (1 - g / 4)
-        ctx.strokeStyle = "rgba(255,255,255,0.1)"
-        ctx.beginPath()
-        ctx.moveTo(pL, yy); ctx.lineTo(W - pR, yy); ctx.stroke()
-        ctx.fillStyle = "#A9A496"
-        ctx.font = "10px monospace"
-        ctx.textAlign = "right"
-        ctx.fillText(Math.round(lMax * g / 4) + "ms", pL - 5, yy + 3)
-    }
-
-    for (var n = 0; n < online.length; n++) {
-        var dev = online[n]
-        var x = pL + n * (sirka + 4) + 2
-        var vyska = (dev.live.latencyMs / lMax) * (H - pT - pB)
-        var y = H - pB - vyska
-
-        // pomalejsi = svetlejsi
-        if (dev.live.latencyMs > 100) ctx.fillStyle = "#CBA135"
-        else ctx.fillStyle = "#7FEFBD"
-        ctx.fillRect(x, y, sirka, vyska)
-
-        // popisek pod sloupcem otoceny o 45°
-        ctx.save()
-        ctx.translate(x + sirka / 2, H - pB + 5)
-        ctx.rotate(-Math.PI / 4)
-        ctx.fillStyle = "#A9A496"
-        ctx.font = "9px monospace"
-        ctx.textAlign = "right"
-        var lbl = dev.name || dev.ip
-        if (lbl.length > 12) lbl = lbl.substring(0, 10) + ".."
-        ctx.fillText(lbl, 0, 0)
-        ctx.restore()
-    }
+function pw(){
+fetch('/api/plugins',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){
+var el=document.getElementById('pluginWidgets');
+if(!d.length){el.textContent='No plugins.';return;}
+var h='';for(var i=0;i<d.length;i++)h+='<div class="card" style="margin-bottom:8px;padding:10px;font-size:12px"><strong>'+d[i].name+'</strong> v'+d[i].version+'</div>';
+el.innerHTML=h;
+}).catch(function(){});
 }
-
-// widgety z pluginu
-function PluginWidgety() {
-    fetch("/api/plugins", { credentials: "include" })
-        .then(function(r){ return r.json() })
-        .then(function(pluginy) {
-            var div = document.getElementById("pluginWidgets")
-            var wplug = []
-            for (var i = 0; i < pluginy.length; i++) {
-                if (pluginy[i].enabled && pluginy[i].type.includes("widget")) wplug.push(pluginy[i])
-            }
-
-            if (wplug.length == 0) {
-                div.textContent = "No widget plugins installed."
-                return
-            }
-
-            div.innerHTML = ""
-            for (var k = 0; k < wplug.length; k++) {
-                var kont = document.createElement("div")
-                kont.style.border = "1px solid var(--line)"
-                kont.style.marginBottom = "12px"
-                kont.style.minHeight = "80px"
-                div.appendChild(kont)
-
-                try {
-                    WidgetHost.createWidgetFrame(wplug[k].id, kont, null, {})
-                } catch (e) {}
-            }
-        })
+function graf(){
+fetch('/api/dashboard-summary',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){
+var cv=document.getElementById('latencyChart');if(!cv)return;
+var c=cv.getContext('2d'),w=cv.width,h=cv.height;
+c.clearRect(0,0,w,h);c.fillStyle='#0d0d0d';c.fillRect(0,0,w,h);
+var mx=0;for(var i=0;i<d.length;i++)if(d[i].live&&d[i].live.latencyMs&&d[i].live.latencyMs>mx)mx=d[i].live.latencyMs;
+if(!mx)mx=100;
+var bw=w/d.length;
+for(var j=0;j<d.length;j++){
+var l=(d[j].live&&d[j].live.latencyMs)||0,bh=(l/mx)*(h-20),x=j*bw,y=h-bh-10;
+c.fillStyle=d[j].live&&d[j].live.alive?'#c084fc':'#f87171';c.fillRect(x+2,y,bw-4,bh);
+c.fillStyle='#e0e0e0';c.font='10px monospace';c.fillText(d[j].name.substring(0,8),x+2,h-2);
 }
-
-try {
-    var sock = io()
-    sock.on("device:update", function(){ Nacti() })
-} catch (e) {}
-
-Nacti()
-PluginWidgety()
+}).catch(function(){});
 }
-
-lkjhgf()
+stats();pw();graf();
+})();

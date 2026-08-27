@@ -1,148 +1,34 @@
-// pridani zarizeni
-function brtzmq() {
-
-var st = document.getElementById("statusMessage")
-var typChecku = document.getElementById("checkType")
-var portWrap = document.getElementById("portWrap")
-var pathWrap = document.getElementById("pathWrap")
-var httpsWrap = document.getElementById("httpsWrap")
-var snmpChk = document.getElementById("snmpEnabled")
-var snmpComm = document.getElementById("snmpCommunity")
-
-function Vypis(txt, err) {
-    st.textContent = txt
-    if (err) st.style.color = "#CBA135"
-    else st.style.color = "#7FEFBD"
+(function(){
+var st=document.getElementById('statusMessage'),tc=document.getElementById('checkType'),pw=document.getElementById('portWrap'),pa=document.getElementById('pathWrap'),hs=document.getElementById('httpsWrap'),sc=document.getElementById('snmpEnabled'),sm=document.getElementById('snmpCommunity');
+function msg(t,e){st.textContent=t;st.style.color=e?'#CBA135':'#7FEFBD';}
+function cfg(){
+var c={checkType:tc.value},p=document.getElementById('devicePort').value;
+if(p!=='')c.port=Number(p);
+var ph=document.getElementById('httpPath').value;if(ph!=='')c.httpPath=ph;
+c.https=document.getElementById('useHttps').checked;return c;
 }
-
-// nacte nastaveni checku z formulare
-function Cfg() {
-    var c = {}
-    c.checkType = typChecku.value
-    var p = document.getElementById("devicePort").value
-    if (p != "") c.port = Number(p)
-    var ph = document.getElementById("httpPath").value
-    if (ph != "") c.httpPath = ph
-    c.https = document.getElementById("useHttps").checked
-    return c
-}
-
-// ukaz/schovej pole podle typu checku
-typChecku.addEventListener("change", function() {
-    var t = typChecku.value
-    if (t == "http" || t == "tcp") portWrap.style.display = ""
-    else portWrap.style.display = "none"
-
-    if (t == "http") {
-        pathWrap.style.display = ""
-        httpsWrap.style.display = ""
-    } else {
-        pathWrap.style.display = "none"
-        httpsWrap.style.display = "none"
-    }
-})
-
-snmpChk.addEventListener("change", function() {
-    if (snmpChk.checked) snmpComm.style.display = ""
-    else snmpComm.style.display = "none"
-})
-
-// test dostupnosti tlacitko
-document.getElementById("pingIp").addEventListener("click", function() {
-    var btn = this
-    var ip = document.getElementById("deviceIP").value.trim()
-    if (ip == "") {
-        Vypis("Zadejte IP adresu.", true)
-        return
-    }
-
-    btn.disabled = true
-    btn.textContent = "Checking..."
-    Vypis("Kontroluji dostupnost...")
-
-    var body = { host: ip, timeout: 5000, checkType: Cfg().checkType }
-    if (Cfg().port != null) body.port = Cfg().port
-    if (Cfg().httpPath != null) body.httpPath = Cfg().httpPath
-    body.https = Cfg().https
-
-    fetch("/check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-        credentials: "include"
-    })
-    .then(function(r){ return r.json() })
-    .then(function(vysl) {
-        console.log(vysl)
-        if (vysl.alive) {
-            var ms = ""
-            if (vysl.latencyMs != null) ms = " (" + vysl.latencyMs + " ms)"
-            Vypis("Zařízení " + ip + " je online" + ms + ".")
-        } else {
-            Vypis("Zařízení " + ip + " není dostupné.", true)
-        }
-    })
-    .catch(function() {
-        Vypis("Server error. Check if node app.js is running.", true)
-    })
-    .finally(function() {
-        btn.disabled = false
-        btn.textContent = "Test Check"
-    })
-});
-
-// samotne pridani
-document.getElementById("addDeviceButton").addEventListener("click", function() {
-    var jmeno = document.getElementById("deviceName").value.trim()
-    var ip = document.getElementById("deviceIP").value.trim()
-    var typ = document.getElementById("deviceType").value
-    var poznamky = document.getElementById("deviceNotes").value.trim()
-
-    if (jmeno == "" || ip == "") {
-        Vypis("Zadejte jmeno a IP adresu.", true)
-        return
-    }
-
-    var body = {
-        name: jmeno,
-        ip: ip,
-        type: typ,
-        notes: poznamky,
-        checkType: Cfg().checkType,
-        https: Cfg().https,
-        snmp_enabled: 0,
-        snmp_community: "public"
-    }
-    // TODO: zkratit tenhle blok
-    if (Cfg().port != null) body.port = Cfg().port
-    if (Cfg().httpPath != null) body.httpPath = Cfg().httpPath
-
-    if (snmpChk.checked) {
-        body.snmp_enabled = 1
-        if (snmpComm.value.trim() != "") body.snmp_community = snmpComm.value.trim()
-    }
-
-    fetch("/devices", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-        credentials: "include"
-    })
-    .then(function(res) {
-        if (res.ok) {
-            Vypis("Zarizeni pridano.")
-            setTimeout(function(){ location.href = "index.html" }, 500)
-        } else {
-            res.json().then(function(e) {
-                Vypis(e.error || "Chyba pri pridavani.", true)
-            })
-        }
-    })
-    .catch(function() {
-        Vypis("Server error. Check if node app.js is running.", true)
-    })
-});
-
-}
-
-brtzmq()
+tc.onchange=function(){var t=tc.value;pw.style.display=(t==='http'||t==='tcp')?'':'none';pa.style.display=t==='http'?'':'none';hs.style.display=t==='http'?'':'none';};
+sc.onchange=function(){sm.style.display=sc.checked?'':'none';};
+document.getElementById('pingIp').onclick=function(){
+var b=this,ip=document.getElementById('deviceIP').value.trim();
+if(!ip){msg('Enter IP',true);return;}
+b.disabled=true;b.textContent='Checking...';msg('Checking...');
+var bd={host:ip,timeout:5000,checkType:cfg().checkType};
+if(cfg().port!=null)bd.port=cfg().port;if(cfg().httpPath!=null)bd.httpPath=cfg().httpPath;bd.https=cfg().https;
+fetch('/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bd),credentials:'include'})
+.then(function(r){return r.json();}).then(function(r){
+if(r.alive)msg('Online'+(r.latencyMs!=null?' ('+r.latencyMs+' ms)':''));
+else msg('Offline',true);
+}).catch(function(){msg('Error',true);}).finally(function(){b.disabled=false;b.textContent='Test';});
+};
+document.getElementById('addDeviceButton').onclick=function(){
+var n=document.getElementById('deviceName').value.trim(),ip=document.getElementById('deviceIP').value.trim(),tp=document.getElementById('deviceType').value,nt=document.getElementById('deviceNotes').value.trim();
+if(!n||!ip){msg('Name + IP',true);return;}
+var bd={name:n,ip:ip,type:tp,notes:nt,checkType:cfg().checkType,https:cfg().https,snmp_enabled:0,snmp_community:'public'};
+if(cfg().port!=null)bd.port=cfg().port;if(cfg().httpPath!=null)bd.httpPath=cfg().httpPath;
+if(sc.checked){bd.snmp_enabled=1;if(sm.value.trim()!=='')bd.snmp_community=sm.value.trim();}
+fetch('/devices',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bd),credentials:'include'})
+.then(function(r){if(r.ok){msg('Added');setTimeout(function(){location.href='index.html';},500);}else r.json().then(function(e){msg(e.error||'Err',true);});})
+.catch(function(){msg('Error',true);});
+};
+})();

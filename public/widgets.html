@@ -1,59 +1,12 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="dark">
-    <title>Widgets — BEACON</title>
-</head>
-<body style="font-family: Comic Sans MS, cursive; background:#ffffff; color:#111111;">
-
-<header>
-    <span class="brand-name">BEACON</span>
-    <nav class="topnav">
-        <a href="index.html">Dashboard</a>
-        <a href="terminal.html">Terminal</a>
-        <a href="discovery.html">Discovery</a>
-        <a href="alerts.html">Alerts</a>
-        <a href="plugins.html">Plugins</a>
-        <a href="widgets.html">Widgets</a>
-        <a href="settings.html">Settings</a>
-        <button class="button2 danger" id="logoutBtn">Logout</button>
-    </nav>
-</header>
+<!DOCTYPE html><html lang="cs"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="color-scheme" content="dark"><title>BEACON</title><link rel="stylesheet" href="css/style.css"></head><body>
+<header><span class="brand-name">BEACON</span>
+<nav class="topnav"><a href="index.html">Dashboard</a><a href="terminal.html">Terminal</a><a href="discovery.html">Discovery</a><a href="alerts.html">Alerts</a><a href="plugins.html">Plugins</a><a href="widgets.html">Widgets</a><a href="settings.html">Settings</a><button class="button2 danger" id="logoutBtn">Logout</button></nav></header>
 <main>
-    <div class="widget-grid">
-        <div class="card widget-stat">
-            <div id="widgetOnline" class="widget-stat-value">—</div>
-            <div class="widget-stat-label">Online</div>
-        </div>
-        <div class="card widget-stat">
-            <div id="widgetOffline" class="widget-stat-value">—</div>
-            <div class="widget-stat-label">Offline</div>
-        </div>
-        <div class="card widget-stat">
-            <div id="widgetTotal" class="widget-stat-value">—</div>
-            <div class="widget-stat-label">Total Devices</div>
-        </div>
-        <div class="card widget-stat">
-            <div id="widgetAvgUptime" class="widget-stat-value">—</div>
-            <div class="widget-stat-label">Avg Uptime</div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="section-title">Plugin Widgets</div>
-        <div id="pluginWidgets" class="mono muted" style="font-size:12px">Loading…</div>
-    </div>
-
-    <div class="card">
-        <div class="section-title">Network Latency</div>
-        <canvas id="latencyChart" width="800" height="200" style="width:100%;"></canvas>
-    </div>
+<div class="widget-grid"><div class="card widget-stat"><div id="widgetOnline" class="widget-stat-value">—</div><div class="widget-stat-label">Online</div></div>
+<div class="card widget-stat"><div id="widgetOffline" class="widget-stat-value">—</div><div class="widget-stat-label">Offline</div></div>
+<div class="card widget-stat"><div id="widgetTotal" class="widget-stat-value">—</div><div class="widget-stat-label">Total</div></div>
+<div class="card widget-stat"><div id="widgetAvgUptime" class="widget-stat-value">—</div><div class="widget-stat-label">Uptime</div></div></div>
+<div class="card"><div id="pluginWidgets" class="mono muted" style="font-size:12px">Loading…</div></div>
+<div class="card"><canvas id="latencyChart" width="800" height="200" style="width:100%"></canvas></div>
 </main>
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="js/site.js"></script>
-<script src="js/widgets.js"></script>
-</body>
-</html>
+<script src="/socket.io/socket.io.js"></script><script src="js/site.js"></script><script src="js/widgets.js"></script></body></html>

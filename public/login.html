@@ -1,43 +1,15 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="dark">
-    <title>Login — BEACON</title>
-</head>
-<body style="font-family: Comic Sans MS, cursive; background:#ffffff; color:#111111;">
-
-<!-- demo heslo je admin123 -->
-<div class="scene">
-  <div class="login-shell">
-    <div class="login-title">BEACON</div>
-
-    <div class="login-card">
-      <form id="loginForm">
-        <label class="field-label" for="loginPassword">Password</label>
-        <input class="field" id="loginPassword" placeholder="********" type="password" required autofocus>
-        <button type="submit" class="btn">Enter Beacon</button>
-        <p id="loginStatus" class="status-message" style="text-align:center"></p>
-      </form>
-
-      <form id="tfaForm" style="display:none">
-        <label class="field-label" for="tfaCode">2FA Code</label>
-        <input class="field" id="tfaCode" placeholder="000000" type="text" maxlength="6" required autocomplete="one-time-code" inputmode="numeric">
-        <button type="submit" class="btn">Verify</button>
-        <p id="tfaStatus" class="status-message" style="text-align:center"></p>
-      </form>
-
-      <div class="login-meta">Field Network Monitor · v1.1</div>
-    </div>
-
-    <div class="login-help">
-      Demo password: admin123 · <a href="index.html">Continue as demo</a>
-    </div>
-  </div>
-</div>
-
-<script src="js/site.js"></script>
-<script src="js/login.js"></script>
-</body>
-</html>
+<!DOCTYPE html><html lang="cs"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="color-scheme" content="dark"><title>BEACON</title><link rel="stylesheet" href="css/style.css"></head><body>
+<div class="scene"><div class="login-shell">
+<div class="login-title">BEACON</div>
+<div class="login-card">
+<form id="loginForm"><label class="field-label" for="loginPassword">Password</label>
+<input id="loginPassword" placeholder="********" type="password" required autofocus>
+<button type="submit" class="btn">Enter Beacon</button>
+<p id="loginStatus" class="status-message" style="text-align:center"></p></form>
+<form id="tfaForm" style="display:none"><label class="field-label" for="tfaCode">2FA Code</label>
+<input id="tfaCode" placeholder="000000" type="text" maxlength="6" required autocomplete="one-time-code" inputmode="numeric">
+<button type="submit" class="btn">Verify</button>
+<p id="tfaStatus" class="status-message" style="text-align:center"></p></form>
+<div class="login-meta">v1.1 · admin123</div></div>
+<div class="login-help">Demo: admin123 · <a href="index.html">skip</a></div></div></div>
+<script src="js/site.js"></script><script src="js/login.js"></script></body></html>

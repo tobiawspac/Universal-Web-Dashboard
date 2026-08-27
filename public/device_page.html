@@ -1,54 +1,11 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="dark">
-    <title>Device — BEACON</title>
-</head>
-<body style="font-family: Comic Sans MS, cursive; background:#ffffff; color:#111111;">
-<header>
-    <span class="brand-name">BEACON</span>
-    <nav class="topnav">
-        <a href="index.html">Dashboard</a>
-        <a href="terminal.html">Terminal</a>
-        <a href="discovery.html">Discovery</a>
-        <a href="alerts.html">Alerts</a>
-        <a href="plugins.html">Plugins</a>
-        <a href="widgets.html">Widgets</a>
-        <a href="settings.html">Settings</a>
-        <button class="button2 danger" id="logoutBtn">Logout</button>
-    </nav>
-</header>
+<!DOCTYPE html><html lang="cs"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="color-scheme" content="dark"><title>BEACON</title><link rel="stylesheet" href="css/style.css"></head><body>
+<header><span class="brand-name">BEACON</span>
+<nav class="topnav"><a href="index.html">Dashboard</a><a href="terminal.html">Terminal</a><a href="discovery.html">Discovery</a><a href="alerts.html">Alerts</a><a href="plugins.html">Plugins</a><a href="widgets.html">Widgets</a><a href="settings.html">Settings</a><button class="button2 danger" id="logoutBtn">Logout</button></nav></header>
 <main>
-    <div class="card">
-        <div id="deviceDetails">
-            <p id="deviceName" class="mono" style="font-weight:bold;font-size:13px"></p>
-            <p id="deviceIP" class="mono" style="color:var(--ink-dim);font-size:11px;margin-top:4px"></p>
-            <p id="deviceType" class="mono" style="color:var(--ink-dim);font-size:11px"></p>
-            <div id="deviceActions" style="display:flex;gap:12px;margin-top:14px">
-                <button class="button1" id="pingBtn">Ping</button>
-                <button class="button2" id="backButton">Back</button>
-            </div>
-        </div>
-    </div>
-    <div class="card" id="statsCard" style="display:none">
-        <div class="section-title">Summary (24h)</div>
-        <p id="statUptime" class="mono" style="color:var(--ink-dim);font-size:12px"></p>
-        <p id="statLatency" class="mono" style="color:var(--ink-dim);font-size:12px"></p>
-        <p id="statStatus" class="mono" style="color:var(--ink-dim);font-size:12px"></p>
-    </div>
-    <div class="card" id="historyCard" style="display:none">
-        <div class="section-title">Ping History (1h)</div>
-        <canvas id="historyChart" width="380" height="160"></canvas>
-    </div>
-    <div class="card" id="snmpCard" style="display:none">
-        <div class="section-title">Network Interfaces (SNMP)</div>
-        <div id="snmpInterfaces" style="overflow-x:auto;"></div>
-    </div>
+<div class="card"><p id="deviceName" class="mono" style="font-weight:bold;font-size:13px"></p><p id="deviceIP" class="mono" style="color:var(--dim);font-size:11px;margin-top:4px"></p><p id="deviceType" class="mono" style="color:var(--dim);font-size:11px"></p>
+<div style="display:flex;gap:12px;margin-top:14px"><button class="button1" id="pingBtn">Ping</button><button class="button2" id="backButton">Back</button></div></div>
+<div class="card" id="statsCard" style="display:none"><p id="statUptime" class="mono" style="color:var(--dim);font-size:12px"></p><p id="statLatency" class="mono" style="color:var(--dim);font-size:12px"></p><p id="statStatus" class="mono" style="color:var(--dim);font-size:12px"></p></div>
+<div class="card" id="historyCard" style="display:none"><canvas id="historyChart" width="380" height="160"></canvas></div>
+<div class="card" id="snmpCard" style="display:none"><div id="snmpInterfaces" style="overflow-x:auto"></div></div>
 </main>
-
-<script src="js/site.js"></script>
-<script src="js/device_page.js"></script>
-</body>
-</html>
+<script src="js/site.js"></script><script src="js/device_page.js"></script></body></html>

@@ -1,89 +1,16 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="dark">
-    <title>Add Device — BEACON</title>
-</head>
-<body style="font-family: Comic Sans MS, cursive; background:#ffffff; color:#111111;">
-
-<header>
-    <span class="brand-name">BEACON</span>
-    <nav class="topnav">
-        <a href="index.html">Dashboard</a>
-        <a href="terminal.html">Terminal</a>
-        <a href="discovery.html">Discovery</a>
-        <a href="alerts.html">Alerts</a>
-        <a href="plugins.html">Plugins</a>
-        <a href="widgets.html">Widgets</a>
-        <a href="settings.html">Settings</a>
-        <button class="button2 danger" id="logoutBtn">Logout</button>
-    </nav>
-</header>
-<main>
-    <div class="card card-accent">
-        <div class="section-title">Add Device</div>
-        <div id="addDeviceForm">
-            <div class="form-group">
-                <label class="field-label" for="deviceName">Device Name</label>
-                <input type="text" id="deviceName" placeholder="core-router-01">
-            </div>
-            <div class="form-group">
-                <label class="field-label" for="deviceIP">IP / Hostname</label>
-                <input type="text" id="deviceIP" placeholder="192.168.1.1">
-            </div>
-            <div class="form-group small">
-                <label class="field-label" for="deviceType">Type</label>
-                <select id="deviceType">
-                    <option value="router">Router</option>
-                    <option value="switch">Switch</option>
-                    <option value="server">Server</option>
-                    <option value="camera">Camera</option>
-                    <option value="pc">PC</option>
-                    <option value="printer">Printer</option>
-                </select>
-            </div>
-            <div class="form-group small">
-                <label class="field-label" for="checkType">Check</label>
-                <select id="checkType">
-                    <option value="ping">Ping</option>
-                    <option value="http">HTTP(S)</option>
-                    <option value="tcp">TCP Port</option>
-                </select>
-            </div>
-            <div class="form-group small" id="portWrap" style="display:none">
-                <label class="field-label" for="devicePort">Port</label>
-                <input type="number" id="devicePort" placeholder="80" min="1" max="65535">
-            </div>
-            <div class="form-group small" id="pathWrap" style="display:none">
-                <label class="field-label" for="httpPath">Path</label>
-                <input type="text" id="httpPath" placeholder="/health">
-            </div>
-            <div class="form-group small" id="httpsWrap" style="display:none">
-                <label class="checkbox-label"><input type="checkbox" id="useHttps"> HTTPS</label>
-            </div>
-            <div class="form-group">
-                <label class="field-label" for="deviceNotes">Notes</label>
-                <input type="text" id="deviceNotes" placeholder="optional">
-            </div>
-            <div class="form-group" style="flex:0 1 100%">
-                <label class="checkbox-label"><input type="checkbox" id="snmpEnabled"> Enable SNMP monitoring</label>
-                <input type="text" id="snmpCommunity" placeholder="SNMP community (default: public)" style="display:none;margin-top:8px">
-            </div>
-            <div class="form-group small">
-                <button class="button2" id="pingIp" style="width:100%">Test Check</button>
-            </div>
-        </div>
-        <div style="display:flex;gap:12px;margin-top:16px;">
-            <button class="button2" onclick="location.href='index.html'">Back</button>
-            <button class="button1" id="addDeviceButton">Add Device</button>
-        </div>
-        <p id="statusMessage" class="status-message"></p>
-    </div>
-</main>
-
-<script src="js/site.js"></script>
-<script src="js/add_device.js"></script>
-</body>
-</html>
+<!DOCTYPE html><html lang="cs"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="color-scheme" content="dark"><title>BEACON</title><link rel="stylesheet" href="css/style.css"></head><body>
+<header><span class="brand-name">BEACON</span>
+<nav class="topnav"><a href="index.html">Dashboard</a><a href="terminal.html">Terminal</a><a href="discovery.html">Discovery</a><a href="alerts.html">Alerts</a><a href="plugins.html">Plugins</a><a href="widgets.html">Widgets</a><a href="settings.html">Settings</a><button class="button2 danger" id="logoutBtn">Logout</button></nav></header>
+<main><div class="card card-accent" id="addDeviceForm">
+<input type="text" id="deviceName" placeholder="Name"><input type="text" id="deviceIP" placeholder="IP / Hostname">
+<select id="deviceType"><option value="router">Router</option><option value="switch">Switch</option><option value="server">Server</option><option value="camera">Camera</option><option value="pc">PC</option><option value="printer">Printer</option></select>
+<select id="checkType"><option value="ping">Ping</option><option value="http">HTTP</option><option value="tcp">TCP</option></select>
+<div id="portWrap" style="display:none"><input type="number" id="devicePort" placeholder="Port" min="1" max="65535"></div>
+<div id="pathWrap" style="display:none"><input type="text" id="httpPath" placeholder="/health"></div>
+<div id="httpsWrap" style="display:none"><label class="checkbox-label"><input type="checkbox" id="useHttps"> HTTPS</label></div>
+<input type="text" id="deviceNotes" placeholder="Notes">
+<label class="checkbox-label"><input type="checkbox" id="snmpEnabled"> SNMP</label><input type="text" id="snmpCommunity" placeholder="Community" style="display:none;margin-top:8px">
+<button class="button2" id="pingIp" style="width:100%">Test</button>
+<div style="display:flex;gap:12px;margin-top:16px"><button class="button2" onclick="location.href='index.html'">Back</button><button class="button1" id="addDeviceButton">Add</button></div>
+<p id="statusMessage" class="status-message"></p></div></main>
+<script src="js/site.js"></script><script src="js/add_device.js"></script></body></html>

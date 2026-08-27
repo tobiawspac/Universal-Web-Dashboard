@@ -1,97 +1,14 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-<script>
-// DEMO MODE - static hosting, zadny backend
-window.__DEMO__ = true;
-(function(){
-  var MOCK_DEVICES = [
-    { name: 'Main Router', ip: '192.168.1.1', type: 'router', live: { alive: true, latencyMs: 3 }, summary: { uptimePercent: 99.8, totalChecks: 1440 } },
-    { name: 'Office Switch', ip: '192.168.1.2', type: 'switch', live: { alive: true, latencyMs: 1 }, summary: { uptimePercent: 100, totalChecks: 1440 } },
-    { name: 'File Server', ip: '192.168.1.10', type: 'server', live: { alive: true, latencyMs: 12 }, summary: { uptimePercent: 99.5, totalChecks: 1440 } },
-    { name: 'NAS Storage', ip: '192.168.1.20', type: 'server', live: { alive: true, latencyMs: 8 }, summary: { uptimePercent: 98.9, totalChecks: 1440 } },
-    { name: 'IP Camera', ip: '192.168.1.50', type: 'camera', live: { alive: true, latencyMs: 22 }, summary: { uptimePercent: 97.2, totalChecks: 1440 } },
-    { name: 'Dev PC', ip: '192.168.1.100', type: 'pc', live: { alive: false, latencyMs: null }, summary: { uptimePercent: 85.3, totalChecks: 1440 } },
-    { name: 'Printer', ip: '192.168.1.200', type: 'printer', live: { alive: true, latencyMs: 45 }, summary: { uptimePercent: 99.1, totalChecks: 1440 } },
-    { name: 'Guest WiFi AP', ip: '192.168.1.5', type: 'router', live: { alive: true, latencyMs: 2 }, summary: { uptimePercent: 100, totalChecks: 1440 } }
-  ];
-  var realFetch = window.fetch ? window.fetch.bind(window) : null;
-  function J(txt){ return new Response(JSON.stringify(txt), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
-  window.fetch = function(url, opts){
-    var u = String(url);
-    if (u.indexOf('/api/dashboard-summary') >= 0) return Promise.resolve(J(MOCK_DEVICES));
-    if (u.indexOf('/devices') >= 0) {
-      return Promise.resolve(J(MOCK_DEVICES.map(function(d,i){ return { id: i+1, name: d.name, ip: d.ip, type: d.type, snmp_enabled: 0 }; })));
-    }
-    if (u.indexOf('/summary/') >= 0) return Promise.resolve(J({ uptimePercent: 99.2, avgLatencyMs: 8, lastStatus: 'online', totalChecks: 1440 }));
-    if (u.indexOf('/history/') >= 0) {
-      var rows = [];
-      for (var i=0;i<60;i++) rows.push({ timestamp: Date.now()-i*60000, alive: Math.random()>0.08?1:0, latency_ms: Math.floor(2+Math.random()*20) });
-      return Promise.resolve(J(rows));
-    }
-    if (u.indexOf('/ping') >= 0 || u.indexOf('/check') >= 0) return Promise.resolve(J({ host: '127.0.0.1', alive: true, latencyMs: 12 }));
-    if (u.indexOf('/health') >= 0) return Promise.resolve(J({ ok: true }));
-    // vsechno ostatni api -> ok/prázdný seznam
-    var empty = [ '/api/alerts', '/api/discovery', '/api/plugins', '/api/snmp', '/api/settings' ];
-    for (var k=0;k<empty.length;k++) {
-      if (u.indexOf(empty[k]) >= 0) return Promise.resolve(J([]));
-    }
-    if (realFetch) return realFetch(u, opts);
-    return Promise.resolve(J([]));
-  };
-  // socket.io na static hostingu neni -> no-op
-  window.io = function(){ return { on: function(){}, emit: function(){} }; };
-})();
-</script>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="dark">
-    <title>Device — BEACON · Demo</title>
-</head>
-<body style="font-family: Comic Sans MS, cursive; background:#ffffff; color:#111111;">
-<header>
-    <span class="brand-name">BEACON</span>
-    <nav class="topnav">
-        <a href="index.html">Dashboard</a>
-        <a href="terminal.html">Terminal</a>
-        <a href="discovery.html">Discovery</a>
-        <a href="alerts.html">Alerts</a>
-        <a href="plugins.html">Plugins</a>
-        <a href="widgets.html">Widgets</a>
-        <a href="settings.html">Settings</a>
-        <a href="login.html" class="button2 danger" style="text-decoration:none">Exit Demo</a>
-    </nav>
-</header>
+<!DOCTYPE html><html lang="cs"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="color-scheme" content="dark"><title>BEACON</title><link rel="stylesheet" href="css/style.css"></head><body>
+<header><nav class="site-nav fade-in"><a href="index.html">~</a><a href="terminal.html">terminal</a><a href="discovery.html">discovery</a><a href="alerts.html">alerts</a><a href="plugins.html">plugins</a><a href="widgets.html">widgets</a><a href="settings.html">settings</a><a href="login.html" class="danger">exit</a></nav></header>
 <main>
-    <div class="card">
-        <div id="deviceDetails">
-            <p id="deviceName" class="mono" style="font-weight:bold;font-size:13px"></p>
-            <p id="deviceIP" class="mono" style="color:var(--ink-dim);font-size:11px;margin-top:4px"></p>
-            <p id="deviceType" class="mono" style="color:var(--ink-dim);font-size:11px"></p>
-            <div id="deviceActions" style="display:flex;gap:12px;margin-top:14px">
-                <button class="button1" id="pingBtn">Ping</button>
-                <button class="button2" id="backButton">Back</button>
-            </div>
-        </div>
-    </div>
-    <div class="card" id="statsCard" style="display:none">
-        <div class="section-title">Summary (24h)</div>
-        <p id="statUptime" class="mono" style="color:var(--ink-dim);font-size:12px"></p>
-        <p id="statLatency" class="mono" style="color:var(--ink-dim);font-size:12px"></p>
-        <p id="statStatus" class="mono" style="color:var(--ink-dim);font-size:12px"></p>
-    </div>
-    <div class="card" id="historyCard" style="display:none">
-        <div class="section-title">Ping History (1h)</div>
-        <canvas id="historyChart" width="380" height="160"></canvas>
-    </div>
-    <div class="card" id="snmpCard" style="display:none">
-        <div class="section-title">Network Interfaces (SNMP)</div>
-        <div id="snmpInterfaces" style="overflow-x:auto;"></div>
-    </div>
+<div class="card fade-in delay-1"><div id="deviceDetails">
+<p id="deviceName" class="mono" style="font-weight:600;font-size:13px"></p>
+<p id="deviceIP" class="mono" style="color:var(--dim);font-size:11px;margin-top:4px"></p>
+<p id="deviceType" class="mono" style="color:var(--dim);font-size:11px"></p>
+<div id="deviceActions" style="display:flex;gap:10px;margin-top:12px"><button class="button1" id="pingBtn">Ping</button><button class="button2" id="backButton">←</button></div>
+</div></div>
+<div class="card fade-in delay-2" id="statsCard" style="display:none"><p id="statUptime" class="mono" style="color:var(--dim);font-size:12px"></p><p id="statLatency" class="mono" style="color:var(--dim);font-size:12px"></p><p id="statStatus" class="mono" style="color:var(--dim);font-size:12px"></p></div>
+<div class="card fade-in delay-2" id="historyCard" style="display:none"><canvas id="historyChart" width="380" height="150"></canvas></div>
+<div class="card fade-in delay-3" id="snmpCard" style="display:none"><div id="snmpInterfaces" style="overflow-x:auto"></div></div>
 </main>
-
-<script src="js/site.js"></script>
-<script src="js/device_page.js"></script>
-</body>
-</html>
+<script src="js/demo-mock.js"></script><script src="js/site.js"></script><script src="js/device_page.js"></script></body></html>
